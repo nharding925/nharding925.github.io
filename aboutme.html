@@ -293,8 +293,9 @@
     const DASH_DURATION   = 10;
     const DASH_COOLDOWN   = 90;
  
+    //0.0001 best value
     const SOAP_SPAWN_CHANCE      = 0.0001;
-    const SOAP_POWERUP_FRAMES    = Math.round(38 * 60);
+    const SOAP_POWERUP_FRAMES    = Math.round(37 * 60);
     const SOAP_ABSORB_FRAMES     = 120;
     const SOAP_SPEED_MULT        = 2.8;
 
@@ -329,6 +330,11 @@
     let soapActive      = false;
     let soapTimer       = 0;
     let absorbFloatY    = 0;
+    let beatPhase = .5;
+const BEAT_FRAMES = 60 * 60 / 55;
+let beatFlash = 0;
+let beatShakeX = 0;
+let beatShakeY = 0;
  
     function groundY() { return H * 0.95; }
 
@@ -338,6 +344,7 @@
     }
  
     function initRunner() {
+      beatPhase = .5; beatFlash = 0; beatShakeX = 0; beatShakeY = 0;
       fishCount    = 0;
       distance     = 0;
       speed        = 1;
@@ -496,6 +503,7 @@
     }
  
     function endSoapPowerup() {
+      beatPhase = 0; beatFlash = 0; beatShakeX = 0; beatShakeY = 0;
       soapActive = false;
       stopMusic();
       bgMusic = new Audio('chihiro.mp3');
@@ -549,6 +557,18 @@
  
       if (soapActive) {
         soapTimer--;
+        beatPhase += 1;
+const beatPos = (beatPhase % BEAT_FRAMES) / BEAT_FRAMES;
+if (beatPos < (1 / BEAT_FRAMES)) {
+  beatFlash = 1.0;
+  const shakeStrength = 15;
+  beatShakeX = (Math.random() - 0.5) * shakeStrength * 2;
+  beatShakeY = (Math.random() - 0.5) * shakeStrength * 2;
+} else {
+  beatFlash *= 0.82; 
+  beatShakeX *= 0.7;
+  beatShakeY *= 0.7;
+}
         bgX -= speed * (SOAP_SPEED_MULT - 1) * 0.2;
         const bubbleFloatY = H * 0.18 + Math.sin(frameCount * 0.035) * H * 0.04;
         player.y  += (bubbleFloatY - player.y) * 0.055;
@@ -648,6 +668,8 @@
     }
  
     function draw() {
+      canvas.style.transform = (soapActive && (Math.abs(beatShakeX) > 0.1 || Math.abs(beatShakeY) > 0.1))
+  ? `translate(${beatShakeX}px, ${beatShakeY}px)` : '';
       ctx.clearRect(0, 0, W, H);
  
       if (imgs.bg.complete && imgs.bg.naturalWidth > 0 && imgs.bg2.complete && imgs.bg2.naturalWidth > 0) {
@@ -844,6 +866,39 @@
         ctx.fillStyle = isDead ? '#888' : (soapActive ? '#5bc8f5' : '#9b59b6');
         ctx.fillRect(player.x, player.y, player.w, player.h);
       }
+      if (soapActive && beatFlash > 0.01) {
+  ctx.save();
+  ctx.translate(beatShakeX, beatShakeY); 
+
+  const flashAlpha = beatFlash * 0.75;
+  const borderW = 18;
+  
+
+  const gtop = ctx.createLinearGradient(0, 0, 0, borderW * 3);
+  gtop.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
+  gtop.addColorStop(1, 'rgba(180, 240, 255, 0)');
+  ctx.fillStyle = gtop; ctx.fillRect(0, 0, W, borderW * 3);
+  
+
+  const gbot = ctx.createLinearGradient(0, H, 0, H - borderW * 3);
+  gbot.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
+  gbot.addColorStop(1, 'rgba(180, 240, 255, 0)');
+  ctx.fillStyle = gbot; ctx.fillRect(0, H - borderW * 3, W, borderW * 3);
+  
+ 
+  const gleft = ctx.createLinearGradient(0, 0, borderW * 3, 0);
+  gleft.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
+  gleft.addColorStop(1, 'rgba(180, 240, 255, 0)');
+  ctx.fillStyle = gleft; ctx.fillRect(0, 0, borderW * 3, H);
+  
+  
+  const gright = ctx.createLinearGradient(W, 0, W - borderW * 3, 0);
+  gright.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
+  gright.addColorStop(1, 'rgba(180, 240, 255, 0)');
+  ctx.fillStyle = gright; ctx.fillRect(W - borderW * 3, 0, borderW * 3, H);
+  
+  ctx.restore();
+}
     }
  
     function showGameOver() {
