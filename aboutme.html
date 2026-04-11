@@ -178,8 +178,7 @@
         </div>
       </div>
 
-      <!-- Dark overlay: sits above canvas, below UI (z-index 5). Activated during absorb + bubble. -->
-      <div id="soapDarkOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0);pointer-events:none;transition:background 0.6s ease;z-index:5;"></div>
+      <!-- Dark overlay removed — darkness is now drawn directly on canvas so kitty can glow above it -->
     </div>
   </div>
 
@@ -248,8 +247,6 @@
     const dashIndicator = document.getElementById('dashIndicator');
     const soapTimerWrap = document.getElementById('soapTimerWrap');
     const soapTimerBar = document.getElementById('soapTimerBar');
-    const soapDarkOverlay = document.getElementById('soapDarkOverlay');
-
     let W, H;
     function resize() {
       W = canvas.width = wrap.clientWidth;
@@ -290,7 +287,7 @@
     const DASH_DURATION   = 10;
     const DASH_COOLDOWN   = 90;
 
-    const SOAP_SPAWN_CHANCE      = 0.021;
+    const SOAP_SPAWN_CHANCE      = 0.00002;
     const SOAP_POWERUP_FRAMES    = Math.round(38 * 60);
     const SOAP_ABSORB_FRAMES     = 120;
     const SOAP_SPEED_MULT        = 2.8;
@@ -320,13 +317,6 @@
 
     function groundY() { return H * 0.95; }
 
-    // Central helper — call whenever soapActive or soapAbsorbing changes
-    function updateDarkOverlay() {
-      soapDarkOverlay.style.background = (soapActive || soapAbsorbing)
-        ? 'rgba(0,0,10,0.72)'
-        : 'rgba(0,0,0,0)';
-    }
-
     function initRunner() {
       fishCount    = 0;
       distance     = 0;
@@ -347,7 +337,6 @@
       fishCountEl.textContent = '0';
       distCountEl.textContent = '0';
       soapTimerWrap.style.display = 'none';
-      updateDarkOverlay();
       const ph = H * 0.18;
       player = { x: W * 0.15, y: groundY() - ph, w: ph * 0.85, h: ph, vy: 0, onGround: true, jumps: 0, flipped: false };
     }
@@ -449,7 +438,6 @@
       absorbFloatY = player.y;
       playSound('softsoap.mp3', 0.75);
       if (bgMusic) { bgMusic.pause(); }
-      updateDarkOverlay(); // screen goes dark
     }
 
     function endSoapAbsorb() {
@@ -462,7 +450,6 @@
       bgMusic.volume = 0.3;
       bgMusic.loop   = true;
       bgMusic.play().catch(e => console.error('Music error (chihirofast.mp3):', e));
-      updateDarkOverlay(); // stays dark (soapActive now true)
     }
 
     function endSoapPowerup() {
@@ -474,7 +461,6 @@
       bgMusic.loop   = true;
       bgMusic.play().catch(e => console.error('Music error (chihiro.mp3):', e));
       player.vy = 3;
-      updateDarkOverlay(); // screen brightens back
     }
 
     function update() {
@@ -570,7 +556,7 @@
 
       const lastFish = collectibles[collectibles.length - 1];
       if (!lastFish || lastFish.x < W - 300) {
-        if (Math.random() < 0.010) spawnFish();
+        if (Math.random() < 0.020) spawnFish();
       }
 
       if (!soapActive && !soapAbsorbing && soaps.length === 0) {
@@ -704,6 +690,18 @@
         const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
         const drawW  = player.h * aspect;
 
+        // Draw dark overlay on canvas during absorb/bubble so kitty can glow above it
+        if (soapActive || soapAbsorbing) {
+          // Animate darkness: fade in during absorb, solid during active
+          const darkAlpha = soapAbsorbing
+            ? 0.72 * (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES)
+            : 0.72;
+          ctx.save();
+          ctx.fillStyle = `rgba(0,0,10,${darkAlpha})`;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+
         let vx = 0, vy = 0;
         if (soapAbsorbing) {
           const intensity = 5 * (soapAbsorbTimer / SOAP_ABSORB_FRAMES);
@@ -714,12 +712,36 @@
         const drawX = player.x + vx;
         const drawY = player.y + vy;
 
+        // Draw radial glow halo behind kitty during bubble
+        if (soapActive || soapAbsorbing) {
+          const cx = drawX + drawW / 2;
+          const cy = drawY + player.h / 2;
+          const absorbProgress = soapAbsorbing ? (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES) : 1;
+          const pulse = soapActive ? (0.6 + Math.sin(frameCount * 0.08) * 0.4) : absorbProgress;
+          const haloR = Math.max(drawW, player.h) * (soapActive ? 1.4 : 0.9);
+          const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+          halo.addColorStop(0, `rgba(180, 240, 255, ${0.55 * pulse})`);
+          halo.addColorStop(0.4, `rgba(120, 200, 255, ${0.3 * pulse})`);
+          halo.addColorStop(1, 'rgba(80, 160, 255, 0)');
+          ctx.save();
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
         ctx.save();
 
         if (soapAbsorbing) {
           const absorbProgress = 1 - (soapAbsorbTimer / SOAP_ABSORB_FRAMES);
           ctx.shadowColor = `rgba(100, 215, 255, ${0.4 + absorbProgress * 0.4})`;
           ctx.shadowBlur  = 18 + absorbProgress * 35;
+        } else if (soapActive) {
+          // Strong cyan/white glow so kitty blazes through the dark
+          const pulse = 0.7 + Math.sin(frameCount * 0.08) * 0.3;
+          ctx.shadowColor = `rgba(180, 240, 255, ${pulse})`;
+          ctx.shadowBlur  = 40 + Math.sin(frameCount * 0.05) * 15;
         }
 
         if (player.flipped && !soapAbsorbing && !soapActive) {
@@ -754,7 +776,6 @@
       soapAbsorbing = false;
       soapActive    = false;
       soapTimerWrap.style.display = 'none';
-      updateDarkOverlay(); // clear dark overlay on death
       stopMusic();
       bgMusic = new Audio('chihirodeath.mp3');
       bgMusic.volume = 0.3;
@@ -804,6 +825,8 @@
 
     const dogLinkBack    = document.getElementById('dogLinkBack');
     const aboutSection2  = document.getElementById('aboutSection2');
+
+
 
     window.addEventListener('scroll', () => {
       if (gameRunning) return;
