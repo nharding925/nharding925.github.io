@@ -1,3 +1,0 @@
-*.mp3 !text !filter !merge !diff
-chihiro.mp3 filter=lfs diff=lfs merge=lfs -text
-chihirodeath.mp3 filter=lfs diff=lfs merge=lfs -text
