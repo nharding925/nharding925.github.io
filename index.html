@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Website</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <span class="logo">Nathan Harding</span>
+        <div>
+            <a href="#section1">Home</a>
+            <a href="#section2">Projects</a>
+            <a href="#section3">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Section 1 — background1.jpeg -->
+    <section class="section" id="section1" style="background-image: url('background1.jpeg');">
+        <div class="hero">
+            <h1>Hey, I'm Nathan Harding</h1>
+            <p>I'm a computer science major at Quinnipiac, here are some things I've built</p>
+        </div>
+    </section>
+
+    <!-- Section 2 — background2.jpeg -->
+    <section class="section" id="section2" style="background-image: url('background2.jpeg');">
+        <div class="section-content">
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Project 1</h3>
+                    <p>bla bla bla.</p>
+                </div>
+                <div class="card">
+                    <h3>Project 2</h3>
+                    <p>bla bla bla</p>
+                </div>
+                <div class="card">
+                    <h3>Project 3</h3>
+                    <p>Sbla bla bla.</p>
+                </div>
+                <div class="card">
+                    <h3>Project 4</h3>
+                    <p>bla bla bla</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dog easter egg -->
+        <a href="aboutme.html" class="dog-link" id="dogLink">
+            <span class="dog-label">click me!</span>
+            <img src="RAHH.jpeg" alt="my dog" class="dog-img" />
+        </a>
+
+    </section>
+
+    <!-- Section 3 — background3.jpeg -->
+    <section class="section" id="section3"
+        style="background-image: url('background3.jpeg'); position: relative; overflow: hidden;">
+        <div class="section-content">
+            <div class="two-col">
+                <div class="box">
+                    <h2>About me</h2>
+                    <p>I'm a Computer Science major and Psychology minor at Quinnipiac University.</p>
+                </div>
+                <div class="box">
+                    <h2>Contact</h2>
+                    <p>Email: nharding925@gmail.com</p>
+                    <p>GitHub: github.com/nharding925</p>
+                    <p>LinkedIn: linkedin.com/in/nharding925</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cat easter egg -->
+        <div class="cat-group" id="catGroup">
+            <img src="catpaw.jpeg" alt="cat paw" class="cat-paw" onclick="playMeow()" style="cursor: pointer;" />
+            <img src="cat.jpeg" alt="my cat" class="cat-img" onclick="playMeow()" style="cursor: pointer;" />
+        </div>
+
+    </section>
+
+    <script>
+        const section2 = document.getElementById('section2');
+        const section3 = document.getElementById('section3');
+        const dogLink = document.getElementById('dogLink');
+        const catGroup = document.getElementById('catGroup');
+        const catImgEl = document.querySelector('.cat-img');
+        const catPawEl = document.querySelector('.cat-paw');
+
+        let catClickCount = 0;
+        let isEvil = false;
+
+        catImgEl.addEventListener('click', () => {
+            if (Math.random() < 0.10) {
+                isEvil = true;
+                catImgEl.src = 'evilkitty.jpeg';
+                catImgEl.style.transform = 'rotate(270deg)';
+                catImgEl.style.width = '250px';
+                catPawEl.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            // Dog animation
+            const rect2 = section2.getBoundingClientRect();
+            const section2Height = section2.offsetHeight;
+            const scrolledIn2 = window.innerHeight - rect2.top;
+            const progress2 = Math.min(Math.max(scrolledIn2 / section2Height, 0), 1);
+            const translateX2 = -220 + (progress2 * 220);
+            const translateY2 = 150 - (progress2 * 150);
+            dogLink.style.transform = `translateX(${translateX2}px) translateY(${translateY2}px)`;
+            dogLink.style.opacity = progress2 > 0.05 ? 1 : 0;
+
+            // Cat animation
+            const rect3 = section3.getBoundingClientRect();
+            const section3Height = section3.offsetHeight;
+            const scrolledIn3 = window.innerHeight - rect3.top;
+            const progress3 = Math.min(Math.max(scrolledIn3 / section3Height, 0), 1);
+
+            const translateX3 = 320 - (progress3 * 320);
+            catGroup.style.transform = `translateX(${translateX3}px)`;
+            catGroup.style.opacity = progress3 > 0.05 ? 1 : 0;
+        });
+
+        function playMeow() {
+            let sound;
+            let volume = 1.0;
+
+            if (isEvil) {
+                sound = 'hiss.mp3';
+            } else {
+                if (Math.random() < 0.01) {
+                    sound = 'bark.mp3';
+                    volume = 0.1;
+                } else {
+                    const meows = ['meow1.mp3', 'meow2.mp3', 'meow3.mp3'];
+                    sound = meows[Math.floor(Math.random() * meows.length)];
+                    if (sound === 'meow2.mp3') volume = 0.3;
+                }
+            }
+
+            const audio = new Audio(sound);
+            audio.volume = volume;
+            audio.play();
+        }
+    </script>
+
+</body>
+
+</html>
