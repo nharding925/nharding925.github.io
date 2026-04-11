@@ -108,7 +108,7 @@
       <canvas id="runnerCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
       <div id="runnerUI"
         style="position: absolute; top: 16px; left: 0; right: 0; text-align: center; font-family: Gabarito, sans-serif; color: white; font-size: 22px; font-weight: 500; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
-        🐟 Fish: <span id="fishCount">0</span>
+        🐟 Fish: <span id="fishCount">0</span> &nbsp;|&nbsp; 📏 <span id="distCount">0</span> ft
       </div>
 
       <!-- Start screen -->
@@ -128,10 +128,8 @@
             style="background: rgba(137, 86, 151, 0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 22px;"></span>
             <div>
-              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Space / W
-              </div>
-              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Jump
-                (double jump!)</div>
+              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Space / W</div>
+              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Jump (double jump!)</div>
             </div>
           </div>
           <div
@@ -139,28 +137,23 @@
             <span style="font-size: 22px;"></span>
             <div>
               <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">E</div>
-              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Dash
-                forward</div>
+              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Dash forward</div>
             </div>
           </div>
           <div
             style="background: rgba(137, 86, 151, 0.35); backdrop-filter: blur(8px); border: 1px solid rgba(158, 54, 54, 0.25); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 22px;"></span>
             <div>
-              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Collect
-                fish</div>
-              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Grab all
-                you can!</div>
+              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Collect fish</div>
+              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">Grab all you can!</div>
             </div>
           </div>
           <div
             style="background: rgba(137, 86, 151, 0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 22px;"></span>
             <div>
-              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Avoid
-                coral</div>
-              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">It hurts
-                kitty!</div>
+              <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600;">Avoid coral</div>
+              <div style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 11px;">It hurts kitty!</div>
             </div>
           </div>
         </div>
@@ -174,6 +167,16 @@
       <div id="dashIndicator"
         style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: Gabarito, sans-serif; font-size: 15px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none; background: rgba(137, 86, 151, 0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 18px; opacity: 0; transition: opacity 0.3s; white-space: nowrap;">
         Dash ready!</div>
+
+      <!-- Soap power-up timer bar -->
+      <div id="soapTimerWrap"
+        style="position: absolute; top: 54px; left: 50%; transform: translateX(-50%); width: 220px; display: none; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;">
+        <div style="color: white; font-family: Gabarito, sans-serif; font-size: 13px; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.7);">🫧 Soap Power-Up!</div>
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden;">
+          <div id="soapTimerBar"
+            style="height: 100%; width: 100%; background: linear-gradient(90deg, #a8edff, #c9aaff); border-radius: 4px; transition: width 0.1s linear;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -238,7 +241,10 @@
     const canvas = document.getElementById('runnerCanvas');
     const ctx = canvas.getContext('2d');
     const fishCountEl = document.getElementById('fishCount');
+    const distCountEl = document.getElementById('distCount');
     const dashIndicator = document.getElementById('dashIndicator');
+    const soapTimerWrap = document.getElementById('soapTimerWrap');
+    const soapTimerBar = document.getElementById('soapTimerBar');
 
     let W, H;
     function resize() {
@@ -257,62 +263,85 @@
     function playSound(src, volume) {
       const sfx = new Audio(src);
       sfx.volume = volume !== undefined ? volume : 0.5;
-      sfx.play().catch(() => { });
+      sfx.play().catch(() => {});
+      return sfx;
     }
 
     const imgs = {
-      player: loadImg('happykitty.jpeg'),
-      dead: loadImg('deadkitty.jpeg'),
-      fish: loadImg('fish.jpeg'),
+      player:   loadImg('happykitty.jpeg'),
+      dead:     loadImg('deadkitty.jpeg'),
+      godcat:   loadImg('godcat.jpeg'),
+      fish:     loadImg('fish.jpeg'),
       obstacle: loadImg('coral.png'),
-      bg: loadImg('background6.jpeg'),
-      bg2: loadImg('background7.jpeg'),
-      sand: loadImg('sand.png')
+      bg:       loadImg('background6.jpeg'),
+      bg2:      loadImg('background7.jpeg'),
+      sand:     loadImg('sand.png'),
+      soap:     loadImg('softsoap.png'),
+      bubble:   loadImg('bubble.png')
     };
 
-    const GRAVITY = 1.2;
-    const JUMP_FORCE = -35;
-    const DASH_SPEED = 20;
-    const DASH_DURATION = 10;
-    const DASH_COOLDOWN = 90;
+    const GRAVITY         = 1.2;
+    const JUMP_FORCE      = -35;
+    const DASH_SPEED      = 20;
+    const DASH_DURATION   = 10;
+    const DASH_COOLDOWN   = 90;
 
-    let gameRunning = false;
-    let fishCount = 0;
-    let speed = 2;
-    let frameCount = 0;
-    let isDead = false;
-    let deathTimer = 0;
-    let player = {};
-    let obstacles = [];
+    const SOAP_SPAWN_CHANCE      = 0.00009;
+    const SOAP_POWERUP_FRAMES    = Math.round(38 * 60);
+    const SOAP_ABSORB_FRAMES     = 120;
+    const SOAP_SPEED_MULT        = 2.8;
+
+    let gameRunning  = false;
+    let fishCount    = 0;
+    let distance     = 0;
+    let speed        = 2;
+    let frameCount   = 0;
+    let isDead       = false;
+    let deathTimer   = 0;
+    let player       = {};
+    let obstacles    = [];
     let collectibles = [];
-    let bgX = 0;
-    let dashFrames = 0;
+    let soaps        = [];
+    let bgX          = 0;
+    let dashFrames   = 0;
     let dashCooldown = 0;
-    let bgMusic = null;
-    let dashTimeout = null;
-    let wasOnGround = true;
+    let bgMusic      = null;
+    let dashTimeout  = null;
 
-    function groundY() { return H * 0.95; }
+    let soapAbsorbing = false;
+    let soapAbsorbTimer = 0;
+    let soapActive    = false;
+    let soapTimer     = 0;
+    let absorbFloatY  = 0;
+
+    function groundY()  { return H * 0.95; }
 
     function initRunner() {
-      fishCount = 0;
-      speed = 1;
-      frameCount = 0;
-      isDead = false;
-      deathTimer = 0;
-      obstacles = [];
+      fishCount    = 0;
+      distance     = 0;
+      speed        = 1;
+      frameCount   = 0;
+      isDead       = false;
+      deathTimer   = 0;
+      obstacles    = [];
       collectibles = [];
-      bgX = 0;
-      dashFrames = 0;
+      soaps        = [];
+      bgX          = 0;
+      dashFrames   = 0;
       dashCooldown = 0;
-      wasOnGround = true;
+      soapAbsorbing = false;
+      soapAbsorbTimer = 0;
+      soapActive   = false;
+      soapTimer    = 0;
       fishCountEl.textContent = '0';
+      distCountEl.textContent = '0';
+      soapTimerWrap.style.display = 'none';
       const ph = H * 0.18;
-      player = { x: W * 0.15, y: groundY() - ph, w: ph * 0.85, h: ph, vy: 0, onGround: true, jumps: 0 };
+      player = { x: W * 0.15, y: groundY() - ph, w: ph * 0.85, h: ph, vy: 0, onGround: true, jumps: 0, flipped: false };
     }
 
     function jump() {
-      if (!gameRunning || isDead) return;
+      if (!gameRunning || isDead || soapAbsorbing || soapActive) return;
       if (player.jumps < 2) {
         player.vy = JUMP_FORCE;
         player.onGround = false;
@@ -325,11 +354,11 @@
     }
 
     function dash() {
-      if (!gameRunning || isDead) return;
+      if (!gameRunning || isDead || soapAbsorbing || soapActive) return;
       if (dashCooldown > 0) return;
-      dashFrames = DASH_DURATION;
+      dashFrames   = DASH_DURATION;
       dashCooldown = DASH_COOLDOWN;
-      player.vy = -10;
+      player.vy    = -10;
       player.jumps = 1;
       playSound('dash.mp3', 0.5);
       showDashMsg('Dashing!', true);
@@ -343,111 +372,197 @@
         : 'rgba(137, 86, 151, 0.35)';
       clearTimeout(dashTimeout);
       dashTimeout = setTimeout(() => {
-        if (!active) dashIndicator.style.opacity = '0';
-        else dashIndicator.style.opacity = '0.6';
+        dashIndicator.style.opacity = active ? '0.6' : '0';
       }, active ? 500 : 2000);
     }
 
     const keys = {};
-
     document.addEventListener('keydown', e => {
       keys[e.code] = true;
       if (e.code === 'Space' || e.code === 'KeyW') { e.preventDefault(); jump(); }
       if (e.code === 'KeyE') { e.preventDefault(); dash(); }
     });
-
-    document.addEventListener('keyup', e => {
-      keys[e.code] = false;
-    });
+    document.addEventListener('keyup', e => { keys[e.code] = false; });
 
     function spawnObstacle() {
       const h = H * 0.32 + Math.random() * H * 0.1;
       const w = h * 0.65;
       obstacles.push({ x: W + w, y: groundY() - h + (h * 0.4), w, h });
     }
+
     function spawnFish() {
       const tooClose = obstacles.some(o => o.x < W + 300 && o.x > W - 200);
       if (tooClose) return;
-      const size = H * 0.14;
+      const size  = H * 0.14;
       const baseY = groundY() - size - H * 0.05 - Math.random() * H * 0.35;
       collectibles.push({
         x: W + size, y: baseY, w: size, h: size,
         collected: false,
         baseY,
         bobOffset: Math.random() * Math.PI * 2,
-        bobSpeed: 0.04 + Math.random() * 0.03,
+        bobSpeed:  0.04 + Math.random() * 0.03,
         bobAmount: H * 0.03 + Math.random() * H * 0.02
+      });
+    }
+
+    function spawnSoap() {
+      if (soaps.length > 0) return;
+      const size  = H * 0.13;
+      const baseY = groundY() - size - H * 0.15 - Math.random() * H * 0.20;
+      soaps.push({
+        x: W + size, y: baseY, w: size, h: size,
+        collected: false,
+        baseY,
+        bobOffset:  Math.random() * Math.PI * 2,
+        bobSpeed:   0.025,
+        bobAmount:  H * 0.025,
+        glowPhase:  0
       });
     }
 
     function rectOverlap(a, b, shrink) {
       const s = shrink || 0;
       return a.x + s < b.x + b.w - s && a.x + a.w - s > b.x + s &&
-        a.y + s < b.y + b.h - s && a.y + a.h - s > b.y + s;
+             a.y + s < b.y + b.h - s && a.y + a.h - s > b.y + s;
     }
 
     function stopMusic() {
-      if (bgMusic) {
-        bgMusic.pause();
-        bgMusic.src = '';
-        bgMusic = null;
-      }
+      if (bgMusic) { bgMusic.pause(); bgMusic.src = ''; bgMusic = null; }
+    }
+
+    function startSoapAbsorb() {
+      soapAbsorbing   = true;
+      soapAbsorbTimer = SOAP_ABSORB_FRAMES;
+
+      player.vy   = 0;
+      absorbFloatY = player.y;
+
+      playSound('softsoap.mp3', 0.75);
+
+      if (bgMusic) { bgMusic.pause(); }
+    }
+
+    function endSoapAbsorb() {
+      soapAbsorbing = false;
+
+      stopMusic();
+      bgMusic = new Audio('chihirofast.mp3');
+      bgMusic.volume = 0.3;
+      bgMusic.loop   = true;
+      bgMusic.play().catch(() => {});
+
+      soapActive = true;
+      soapTimer  = SOAP_POWERUP_FRAMES;
+      soapTimerWrap.style.display = 'flex';
+    }
+
+    function endSoapPowerup() {
+      soapActive = false;
+      soapTimerWrap.style.display = 'none';
+
+      stopMusic();
+      bgMusic = new Audio('chihiro.mp3');
+      bgMusic.volume = 0.3;
+      bgMusic.loop   = true;
+      bgMusic.play().catch(() => {});
+
+      player.vy = 3;
     }
 
     function update() {
       if (isDead) {
         deathTimer--;
         player.vy += GRAVITY * 1.5;
-        player.y += player.vy;
-        player.x -= 2;
-        if (deathTimer <= 0) { showGameOver(); }
+        player.y  += player.vy;
+        player.x  -= 2;
+        if (deathTimer <= 0) showGameOver();
+        return;
+      }
+
+      if (soapAbsorbing) {
+        soapAbsorbTimer--;
+
+        const targetY = H * 0.18;
+        player.y += (targetY - player.y) * 0.05;
+        player.vy = 0;
+
+        bgX -= 0.5;
+
+        if (soapAbsorbTimer <= 0) endSoapAbsorb();
         return;
       }
 
       frameCount++;
       speed = 4 + frameCount * 0.002;
-      bgX -= speed * 0.2;
+      bgX  -= speed * 0.2;
+      distance += speed;
+      distCountEl.textContent = Math.floor(distance / 10);
 
-      if (keys['KeyA'] && player.x > W * 0.05) {
-        player.x -= 6;
-      }
-      if (keys['KeyD'] && player.x < W * 0.75) {
-        player.x += 6;
+      if (!soapActive) {
+        if (keys['KeyA'] && player.x > W * 0.05) player.x -= 6;
+        if (keys['KeyD'] && player.x < W * 0.75) player.x += 6;
       }
 
-      // Dash cooldown
       if (dashCooldown > 0) {
         dashCooldown--;
-        if (dashCooldown === 0) {
-          showDashMsg('💨 Dash ready!', false);
-        }
+        if (dashCooldown === 0) showDashMsg('💨 Dash ready!', false);
       }
 
-      // Horizontal dash
-      if (dashFrames > 0) {
+      if (dashFrames > 0 && !soapActive) {
         player.x += DASH_SPEED;
         dashFrames--;
-        const maxX = W * 0.7;
-        if (player.x > maxX) player.x = maxX;
+        if (player.x > W * 0.7) player.x = W * 0.7;
       }
 
-      // Track if player was airborne before physics
-      const wasAirborne = !player.onGround;
+      if (soapActive) {
+        soapTimer--;
 
-      // Physics
-      player.vy += GRAVITY;
-      player.y += player.vy;
-      const gY = groundY() - player.h;
-      if (player.y >= gY) {
-        player.y = gY;
-        if (wasAirborne && player.vy > 2) {
-          playSound('sand.mp3', 0.4);
-        }
-        player.vy = 0;
-        player.onGround = true;
-        player.jumps = 0;
-      } else {
+        soapTimerBar.style.width = ((soapTimer / SOAP_POWERUP_FRAMES) * 100) + '%';
+
+        bgX -= speed * (SOAP_SPEED_MULT - 1) * 0.2;
+
+        const bubbleFloatY = H * 0.18
+                             + Math.sin(frameCount * 0.035) * H * 0.04;
+        player.y  += (bubbleFloatY - player.y) * 0.055;
+        player.vy  = 0;
         player.onGround = false;
+
+        const extraSpeed = speed * (SOAP_SPEED_MULT - 1);
+        for (const obs of obstacles)    obs.x -= extraSpeed;
+        for (const f   of collectibles) f.x   -= extraSpeed * 0.7;
+        for (const s   of soaps)        s.x   -= extraSpeed * 0.7;
+
+        obstacles    = obstacles.filter(o => o.x + o.w > -10);
+
+        if (soapTimer <= 0) endSoapPowerup();
+
+      } else {
+        const wasAirborne = !player.onGround;
+        player.vy += GRAVITY;
+        player.y  += player.vy;
+        const gY   = groundY() - player.h;
+        if (player.y >= gY) {
+          player.y = gY;
+          if (wasAirborne && player.vy > 2) playSound('sand.mp3', 0.4);
+          player.vy = 0;
+          player.onGround = true;
+          player.jumps = 0;
+        } else {
+          player.onGround = false;
+        }
+
+        for (const obs of obstacles) {
+          obs.x -= speed;
+          if (rectOverlap(player, obs, player.w * 0.3)) {
+            isDead     = true;
+            deathTimer = 120;
+            player.vy  = -12;
+            playSound('death.mp3', 0.6);
+            stopMusic();
+            return;
+          }
+        }
+        obstacles = obstacles.filter(o => o.x + o.w > -10);
       }
 
       const minGap = Math.max(180, 340 - frameCount * 0.05);
@@ -461,22 +576,13 @@
         if (Math.random() < 0.010) spawnFish();
       }
 
-      for (const obs of obstacles) {
-        obs.x -= speed;
-        if (rectOverlap(player, obs, player.w * 0.3)) {
-          isDead = true;
-          deathTimer = 120;
-          player.vy = -12;
-          playSound('death.mp3', 0.6);
-          stopMusic();
-          return;
-        }
+      if (!soapActive && !soapAbsorbing && soaps.length === 0) {
+        if (Math.random() < SOAP_SPAWN_CHANCE) spawnSoap();
       }
-      obstacles = obstacles.filter(o => o.x + o.w > -10);
 
       for (const f of collectibles) {
         f.x -= speed * 0.7;
-        f.y = f.baseY + Math.sin(frameCount * f.bobSpeed + f.bobOffset) * f.bobAmount;
+        f.y  = f.baseY + Math.sin(frameCount * f.bobSpeed + f.bobOffset) * f.bobAmount;
         if (!f.collected && rectOverlap(player, f, player.w * 0.25)) {
           f.collected = true;
           fishCount++;
@@ -485,48 +591,88 @@
         }
       }
       collectibles = collectibles.filter(f => f.x + f.w > -10 && !f.collected);
+
+      for (const s of soaps) {
+        s.x -= speed * 0.7;
+        s.y  = s.baseY + Math.sin(frameCount * s.bobSpeed + s.bobOffset) * s.bobAmount;
+        s.glowPhase += 0.06;
+        if (!s.collected && rectOverlap(player, s, player.w * 0.2)) {
+          s.collected = true;
+          startSoapAbsorb();
+        }
+      }
+      soaps = soaps.filter(s => s.x + s.w > -10 && !s.collected);
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
 
-      // Background
       if (imgs.bg.complete && imgs.bg.naturalWidth > 0 && imgs.bg2.complete && imgs.bg2.naturalWidth > 0) {
-        const iw = imgs.bg.naturalWidth;
-        const ih = imgs.bg.naturalHeight;
-        const srcY = ih * 0.5;
-        const srcH = ih * 0.5;
+        const iw = imgs.bg.naturalWidth, ih = imgs.bg.naturalHeight;
+        const srcY = ih * 0.5, srcH = ih * 0.5;
         const offset = ((bgX % W) - W) % W;
         for (let i = 0; i < 3; i++) {
           const x = offset + i * W;
           const useFlipped = Math.floor((-bgX / W) + i) % 2 !== 0;
-          const imgTile = useFlipped ? imgs.bg2 : imgs.bg;
-          ctx.drawImage(imgTile, 0, srcY, iw, srcH, x, 0, W, H);
+          ctx.drawImage(useFlipped ? imgs.bg2 : imgs.bg, 0, srcY, iw, srcH, x, 0, W, H);
         }
       } else {
         ctx.fillStyle = '#0a3d5c';
         ctx.fillRect(0, 0, W, H);
       }
 
-      // Fish
+      if (soapActive) {
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = '#b8f0ff';
+        ctx.lineWidth   = 2;
+        for (let i = 0; i < 20; i++) {
+          const y   = H * 0.08 + (i / 20) * H * 0.84;
+          const len = 70 + Math.random() * 130;
+          const x   = ((frameCount * 20 + i * 131) % (W + 220)) - 220;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - len, y); ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       for (const f of collectibles) {
-        if (!f.collected) {
-          if (imgs.fish.complete && imgs.fish.naturalWidth > 0) {
-            ctx.save();
-            ctx.translate(f.x + f.w / 2, f.y + f.h / 2);
-            ctx.scale(-1, 1);
-            ctx.drawImage(imgs.fish, -f.w / 2, -f.h / 2, f.w, f.h);
-            ctx.restore();
-          } else {
-            ctx.fillStyle = '#f0c040';
-            ctx.beginPath();
-            ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-          }
+        if (f.collected) continue;
+        if (imgs.fish.complete && imgs.fish.naturalWidth > 0) {
+          ctx.save();
+          ctx.translate(f.x + f.w / 2, f.y + f.h / 2);
+          ctx.scale(-1, 1);
+          ctx.drawImage(imgs.fish, -f.w / 2, -f.h / 2, f.w, f.h);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = '#f0c040';
+          ctx.beginPath();
+          ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
-      // Coral
+      for (const s of soaps) {
+        if (s.collected) continue;
+        const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
+        const glowR = s.w * 0.8 + Math.sin(s.glowPhase) * s.w * 0.18;
+        const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+        grd.addColorStop(0, 'rgba(160, 230, 255, 0.6)');
+        grd.addColorStop(1, 'rgba(160, 230, 255, 0)');
+        ctx.save();
+        ctx.fillStyle = grd;
+        ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        if (imgs.soap.complete && imgs.soap.naturalWidth > 0) {
+          ctx.drawImage(imgs.soap, s.x, s.y, s.w, s.h);
+        } else {
+          ctx.fillStyle = '#5bc8f5';
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, s.w / 2, s.h / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
       for (const obs of obstacles) {
         if (imgs.obstacle.complete && imgs.obstacle.naturalWidth > 0) {
           ctx.drawImage(imgs.obstacle, obs.x, obs.y, obs.w, obs.h);
@@ -536,7 +682,6 @@
         }
       }
 
-      // Sand
       if (imgs.sand.complete && imgs.sand.naturalWidth > 0) {
         const sandH = H * 0.22;
         const sandY = groundY() - sandH * 0.5;
@@ -547,43 +692,75 @@
         }
       }
 
-      // Dash trail
-      if (dashFrames > 0 && imgs.player.complete && imgs.player.naturalWidth > 0) {
+      if (dashFrames > 0 && !soapActive && !soapAbsorbing &&
+          imgs.player.complete && imgs.player.naturalWidth > 0) {
         const aspect = imgs.player.naturalWidth / imgs.player.naturalHeight;
-        const drawW = player.h * aspect;
+        const drawW  = player.h * aspect;
         ctx.save();
-        ctx.globalAlpha = 0.2;
-        ctx.drawImage(imgs.player, player.x - 35, player.y, drawW, player.h);
-        ctx.globalAlpha = 0.1;
-        ctx.drawImage(imgs.player, player.x - 65, player.y, drawW, player.h);
+        ctx.globalAlpha = 0.2; ctx.drawImage(imgs.player, player.x - 35, player.y, drawW, player.h);
+        ctx.globalAlpha = 0.1; ctx.drawImage(imgs.player, player.x - 65, player.y, drawW, player.h);
         ctx.restore();
       }
-      // Cat
-      const imgToDraw = isDead ? imgs.dead : imgs.player;
+
+      const imgToDraw = isDead ? imgs.dead : (soapActive && imgs.godcat.complete && imgs.godcat.naturalWidth > 0) ? imgs.godcat : imgs.player;
       if (imgToDraw.complete && imgToDraw.naturalWidth > 0) {
         const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
-        const drawW = player.h * aspect;
+        const drawW  = player.h * aspect;
+
+        let vx = 0, vy = 0;
+        if (soapAbsorbing) {
+          const intensity = 5 * (soapAbsorbTimer / SOAP_ABSORB_FRAMES);
+          vx = (Math.random() - 0.5) * intensity * 2.5;
+          vy = (Math.random() - 0.5) * intensity * 2.5;
+        }
+
+        const drawX = player.x + vx;
+        const drawY = player.y + vy;
+
         ctx.save();
-        if (player.flipped) {
-          ctx.translate(player.x + drawW, player.y);
+
+        if (soapAbsorbing) {
+          const absorbProgress = 1 - (soapAbsorbTimer / SOAP_ABSORB_FRAMES);
+          ctx.shadowColor = `rgba(100, 215, 255, ${0.4 + absorbProgress * 0.4})`;
+          ctx.shadowBlur  = 18 + absorbProgress * 35;
+        }
+
+        if (player.flipped && !soapAbsorbing && !soapActive) {
+          ctx.translate(drawX + drawW, drawY);
           ctx.scale(-1, 1);
           ctx.drawImage(imgToDraw, 0, 0, drawW, player.h);
         } else {
-          ctx.drawImage(imgToDraw, player.x, player.y, drawW, player.h);
+          ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
         }
+
+        ctx.restore();
+        ctx.save();
+
+        if (soapActive && imgs.bubble.complete && imgs.bubble.naturalWidth > 0) {
+          const bSize = Math.max(drawW, player.h) * 3.5;
+          const bcx   = player.x + drawW / 2;
+          const bcy   = player.y + player.h / 2;
+          ctx.globalAlpha = 0.88;
+          ctx.drawImage(imgs.bubble, bcx - bSize / 2, bcy - bSize / 2, bSize, bSize);
+          ctx.globalAlpha = 1;
+        }
+
         ctx.restore();
       } else {
-        ctx.fillStyle = isDead ? '#888' : '#9b59b6';
+        ctx.fillStyle = isDead ? '#888' : (soapActive ? '#5bc8f5' : '#9b59b6');
         ctx.fillRect(player.x, player.y, player.w, player.h);
       }
     }
 
     function showGameOver() {
-      gameRunning = false;
+      gameRunning   = false;
+      soapAbsorbing = false;
+      soapActive    = false;
+      soapTimerWrap.style.display = 'none';
       stopMusic();
       bgMusic = new Audio('chihirodeath.mp3');
       bgMusic.volume = 0.3;
-      bgMusic.loop = true;
+      bgMusic.loop   = true;
       bgMusic.play();
 
       dashIndicator.style.opacity = '0';
@@ -591,11 +768,11 @@
       const runnerStart = document.getElementById('runnerStart');
       runnerStart.style.display = 'flex';
       runnerStart.innerHTML = `
-  <h2 style="color: white; font-family: Gabarito, sans-serif; font-size: 48px; font-weight: 600; margin: 0 0 8px; text-shadow: 0 1px 6px rgba(0,0,0,0.7);">Game Over</h2>
-  <p style="color: rgba(255,255,255,0.8); font-family: Gabarito, sans-serif; font-size: 15px; margin: 0 0 4px;">🐟 Fish collected: ${fishCount}</p>
-  <p style="color: rgba(255,255,255,0.6); font-family: Gabarito, sans-serif; font-size: 13px; margin: 0 0 20px;">The coral got you...</p>
-  <button onclick="startRunner()" style="padding: 12px 40px; font-size: 16px; border-radius: 10px; cursor: pointer; background: rgba(137, 86, 151, 0.5); color: white; border: 1px solid rgba(255,255,255,0.4); font-family: Gabarito, sans-serif; font-weight: 600;">Play Again</button>
-`;
+        <h2 style="color:white;font-family:Gabarito,sans-serif;font-size:48px;font-weight:600;margin:0 0 8px;text-shadow:0 1px 6px rgba(0,0,0,0.7);">Game Over</h2>
+        <p style="color:rgba(255,255,255,0.8);font-family:Gabarito,sans-serif;font-size:15px;margin:0 0 4px;">🐟 Fish collected: ${fishCount} &nbsp;|&nbsp; 📏 ${Math.floor(distance / 10)} ft</p>
+        <p style="color:rgba(255,255,255,0.6);font-family:Gabarito,sans-serif;font-size:13px;margin:0 0 20px;">The coral got you...</p>
+        <button onclick="startRunner()" style="padding:12px 40px;font-size:16px;border-radius:10px;cursor:pointer;background:rgba(137,86,151,0.5);color:white;border:1px solid rgba(255,255,255,0.4);font-family:Gabarito,sans-serif;font-weight:600;">Play Again</button>
+      `;
     }
 
     function loop() {
@@ -606,12 +783,11 @@
 
     function hideDog() {
       dogLinkBack.style.transform = 'translateY(250px)';
-      dogLinkBack.style.opacity = '0';
+      dogLinkBack.style.opacity   = '0';
     }
 
     function startRunner() {
-      const runnerStart = document.getElementById('runnerStart');
-      runnerStart.style.display = 'none';
+      document.getElementById('runnerStart').style.display = 'none';
       gameRunning = true;
       hideDog();
       initRunner();
@@ -619,30 +795,29 @@
       stopMusic();
       bgMusic = new Audio('chihiro.mp3');
       bgMusic.volume = 0.3;
-      bgMusic.loop = true;
+      bgMusic.loop   = true;
       bgMusic.play();
 
       dashIndicator.style.opacity = '1';
-      dashIndicator.textContent = 'Dash ready! (E)';
+      dashIndicator.textContent   = 'Dash ready! (E)';
 
       loop();
     }
 
-    const dogLinkBack = document.getElementById('dogLinkBack');
-    const aboutSection2 = document.getElementById('aboutSection2');
+    const dogLinkBack    = document.getElementById('dogLinkBack');
+    const aboutSection2  = document.getElementById('aboutSection2');
 
     window.addEventListener('scroll', () => {
       if (gameRunning) return;
-      const rect = aboutSection2.getBoundingClientRect();
+      const rect        = aboutSection2.getBoundingClientRect();
       const sectionHeight = aboutSection2.offsetHeight;
-      const scrolledIn = window.innerHeight - rect.top;
-      const progress = Math.min(Math.max(scrolledIn / sectionHeight, 0), 1);
-      const translateY = 250 - (progress * 250);
+      const scrolledIn  = window.innerHeight - rect.top;
+      const progress    = Math.min(Math.max(scrolledIn / sectionHeight, 0), 1);
+      const translateY  = 250 - (progress * 250);
       dogLinkBack.style.transform = `translateY(${translateY}px)`;
-      dogLinkBack.style.opacity = progress > 0.05 ? 1 : 0;
+      dogLinkBack.style.opacity   = progress > 0.05 ? 1 : 0;
     });
   </script>
 
 </body>
-
 </html>
