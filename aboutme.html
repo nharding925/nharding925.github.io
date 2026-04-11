@@ -263,7 +263,7 @@
     function playSound(src, volume) {
       const sfx = new Audio(src);
       sfx.volume = volume !== undefined ? volume : 0.5;
-      sfx.play().catch(() => {});
+      sfx.play().catch(e => console.error('Sound error (' + src + '):', e));
       return sfx;
     }
 
@@ -349,7 +349,10 @@
         player.flipped = true;
         clearTimeout(player.flipTimeout);
         player.flipTimeout = setTimeout(() => { player.flipped = false; }, 300);
-        playSound('jump.mp3', 0.5);
+        // --- FIXED: log errors so we can see if jump.mp3 is missing ---
+        const sfx = new Audio('jump.mp3');
+        sfx.volume = 0.5;
+        sfx.play().catch(e => console.error('Jump sound error (jump.mp3):', e));
       }
     }
 
@@ -449,11 +452,7 @@
       bgMusic = new Audio('chihirofast.mp3');
       bgMusic.volume = 0.3;
       bgMusic.loop   = true;
-      bgMusic.play().catch(() => {});
-
-      soapActive = true;
-      soapTimer  = SOAP_POWERUP_FRAMES;
-      soapTimerWrap.style.display = 'flex';
+      bgMusic.play().catch(e => console.error('Music error (chihirofast.mp3):', e));
     }
 
     function endSoapPowerup() {
@@ -464,7 +463,7 @@
       bgMusic = new Audio('chihiro.mp3');
       bgMusic.volume = 0.3;
       bgMusic.loop   = true;
-      bgMusic.play().catch(() => {});
+      bgMusic.play().catch(e => console.error('Music error (chihiro.mp3):', e));
 
       player.vy = 3;
     }
@@ -761,7 +760,7 @@
       bgMusic = new Audio('chihirodeath.mp3');
       bgMusic.volume = 0.3;
       bgMusic.loop   = true;
-      bgMusic.play();
+      bgMusic.play().catch(e => console.error('Music error (chihirodeath.mp3):', e));
 
       dashIndicator.style.opacity = '0';
 
@@ -796,7 +795,8 @@
       bgMusic = new Audio('chihiro.mp3');
       bgMusic.volume = 0.3;
       bgMusic.loop   = true;
-      bgMusic.play();
+      // --- FIXED: log errors so we can see if chihiro.mp3 is missing ---
+      bgMusic.play().catch(e => console.error('Music error (chihiro.mp3):', e));
 
       dashIndicator.style.opacity = '1';
       dashIndicator.textContent   = 'Dash ready! (E)';
