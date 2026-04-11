@@ -287,7 +287,7 @@
     const DASH_DURATION   = 10;
     const DASH_COOLDOWN   = 90;
 
-    const SOAP_SPAWN_CHANCE      = 0.00002;
+    const SOAP_SPAWN_CHANCE      = 0.0002;
     const SOAP_POWERUP_FRAMES    = Math.round(38 * 60);
     const SOAP_ABSORB_FRAMES     = 120;
     const SOAP_SPEED_MULT        = 2.8;
@@ -350,7 +350,7 @@
         player.flipped = true;
         clearTimeout(player.flipTimeout);
         player.flipTimeout = setTimeout(() => { player.flipped = false; }, 300);
-        // No jump sound — removed per request
+
       }
     }
 
@@ -690,9 +690,9 @@
         const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
         const drawW  = player.h * aspect;
 
-        // Draw dark overlay on canvas during absorb/bubble so kitty can glow above it
+
         if (soapActive || soapAbsorbing) {
-          // Animate darkness: fade in during absorb, solid during active
+
           const darkAlpha = soapAbsorbing
             ? 0.72 * (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES)
             : 0.72;
@@ -712,7 +712,7 @@
         const drawX = player.x + vx;
         const drawY = player.y + vy;
 
-        // Draw radial glow halo behind kitty during bubble
+
         if (soapActive || soapAbsorbing) {
           const cx = drawX + drawW / 2;
           const cy = drawY + player.h / 2;
@@ -738,7 +738,7 @@
           ctx.shadowColor = `rgba(100, 215, 255, ${0.4 + absorbProgress * 0.4})`;
           ctx.shadowBlur  = 18 + absorbProgress * 35;
         } else if (soapActive) {
-          // Strong cyan/white glow so kitty blazes through the dark
+
           const pulse = 0.7 + Math.sin(frameCount * 0.08) * 0.3;
           ctx.shadowColor = `rgba(180, 240, 255, ${pulse})`;
           ctx.shadowBlur  = 40 + Math.sin(frameCount * 0.05) * 15;
