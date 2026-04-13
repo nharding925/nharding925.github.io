@@ -351,7 +351,7 @@
       hungry: loadImg('hungrykitty.jpeg'),
       dolphin: loadImg('dolphin.jpeg'),
       sand: loadImg('sand.png'),
-nightsand: loadImg('nightsand.png'),
+      nightsand: loadImg('nightsand.png'),
     };
 
     const GRAVITY = 1.2;
@@ -1000,34 +1000,32 @@ nightsand: loadImg('nightsand.png'),
       }
 
 
-      if (imgs.sand.complete && imgs.sand.naturalWidth > 0) {
-  const sandH = H * 0.22;
-  const sandY = groundY() - sandH * 0.5;
+      if (
+        imgs.sand.complete && imgs.sand.naturalWidth > 0 &&
+        imgs.nightsand && imgs.nightsand.complete && imgs.nightsand.naturalWidth > 0
+      ) {
+        const sandH = H * 0.22;
+        const sandY = groundY() - sandH * 0.5;
 
-  const sandW_day = imgs.sand.naturalWidth * (sandH / imgs.sand.naturalHeight);
-  const sandOffset = ((bgX / 0.2) % sandW_day - sandW_day) % sandW_day;
+        const sandW = imgs.sand.naturalWidth * (sandH / imgs.sand.naturalHeight);
+        const sandOffset = ((bgX / 0.2) % sandW - sandW) % sandW;
 
-  ctx.save();
-  for (let i = 0; i < Math.ceil(W / sandW_day) + 2; i++) {
-    ctx.drawImage(imgs.sand, sandOffset + i * sandW_day, sandY, sandW_day, sandH);
-  }
-  ctx.restore();
 
-  if (np > 0 && imgs.nightsand && imgs.nightsand.complete) {
-    const sandW_night = imgs.nightsand.naturalWidth * (sandH / imgs.nightsand.naturalHeight);
+        ctx.save();
+        ctx.globalAlpha = 1 - np;
+        for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
+          ctx.drawImage(imgs.sand, sandOffset + i * sandW, sandY, sandW, sandH);
+        }
+        ctx.restore();
 
-    const fade = np * np;
 
-    ctx.save();
-    ctx.globalAlpha = fade;
-
-    for (let i = 0; i < Math.ceil(W / sandW_night) + 2; i++) {
-      ctx.drawImage(imgs.nightsand, sandOffset + i * sandW_night, sandY, sandW_night, sandH);
-    }
-
-    ctx.restore();
-  }
-}
+        ctx.save();
+        ctx.globalAlpha = np;
+        for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
+          ctx.drawImage(imgs.nightsand, sandOffset + i * sandW, sandY, sandW, sandH);
+        }
+        ctx.restore();
+      }
 
       if (dashFrames > 0 && !soapActive && !soapAbsorbing && imgs.player.complete && imgs.player.naturalWidth > 0) {
         const aspect = imgs.player.naturalWidth / imgs.player.naturalHeight;
