@@ -216,19 +216,31 @@
         style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: 'HelveticaNeueBlackExt', sans-serif; font-size: 15px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.6); pointer-events: none; background: rgba(137, 86, 151, 0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 6px 18px; opacity: 0; transition: opacity 0.3s; white-space: nowrap; z-index: 10;">
         Dash ready!</div>
 
-        <div id="soapUI"
+      <div id="soapUI"
         style="position: absolute; left: 48px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 10; display: none; flex-direction: column; align-items: center; gap: 12px;">
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7));">
+        <div
+          style="display: flex; flex-direction: column; align-items: center; gap: 12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7));">
           <img id="soapUIImg" src="softsoap.png" style="width: 100px; height: 100px; object-fit: fill;" />
-          <span id="soapUILabel" style="font-family: 'HelveticaNeueBlackExt', sans-serif; font-size: 26px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.6); letter-spacing: 1px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 4px 16px;">Q</span>
+          <span id="soapUILabel"
+            style="font-family: 'HelveticaNeueBlackExt', sans-serif; font-size: 26px; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.6); letter-spacing: 1px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 4px 16px;">Q</span>
         </div>
       </div>
 
       <style>
         @keyframes soapFlash {
-          0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px rgba(100,220,255,0.9)); }
-          50% { opacity: 0.4; filter: drop-shadow(0 0 2px rgba(100,220,255,0.2)); }
+
+          0%,
+          100% {
+            opacity: 1;
+            filter: drop-shadow(0 0 10px rgba(100, 220, 255, 0.9));
+          }
+
+          50% {
+            opacity: 0.4;
+            filter: drop-shadow(0 0 2px rgba(100, 220, 255, 0.2));
+          }
         }
+
         .soap-held {
           animation: soapFlash 0.8s ease-in-out infinite;
         }
@@ -327,6 +339,8 @@
       godcat: loadImg('godcat.jpeg'),
       fish: loadImg('fish.jpeg'),
       fish2: loadImg('fish2.jpeg'),
+      nightfish: loadImg('nightfish.jpeg'),
+      nightbigfish: loadImg('bignightfish.jpeg'),
       obstacle: loadImg('coral.png'),
       bg: loadImg('background6.jpeg'),
       bg2: loadImg('background7.jpeg'),
@@ -336,6 +350,8 @@
       bubble: loadImg('bubble.png'),
       hungry: loadImg('hungrykitty.jpeg'),
       dolphin: loadImg('dolphin.jpeg'),
+      sand: loadImg('sand.png'),
+nightsand: loadImg('nightsand.png'),
     };
 
     const GRAVITY = 1.2;
@@ -344,18 +360,25 @@
     const DASH_DURATION = 10;
     const DASH_COOLDOWN = 90;
 
-    const SOAP_SPAWN_CHANCE = 1.0;
     const SOAP_POWERUP_FRAMES = Math.round(37 * 60);
     const SOAP_ABSORB_FRAMES = 120;
     const SOAP_SPEED_MULT = 2.8;
 
+    //2500 og
+    const NIGHT_THRESHOLD = 2500;
+    const NIGHT_TRANSITION = 500;
+    const BIG_FISH_UNLOCK_DIST = 1000;
+    const NIGHT_FISH_WORTH = 2;
+    const NIGHT_BIG_FISH_WORTH = 10;
     const BIG_FISH_WORTH = 3;
     const BIG_FISH_MIN_INTERVAL = 5;
     const BIG_FISH_MAX_INTERVAL = 8;
+    const NIGHT_BIG_FISH_MIN_INTERVAL = 5;
+    const NIGHT_BIG_FISH_MAX_INTERVAL = 10;
 
     let gameRunning = false;
     let highScoreFish = 0;
-let highScoreDist = 0;
+    let highScoreDist = 0;
     let fishCount = 0;
     let distance = 0;
     let speed = 2;
@@ -373,10 +396,8 @@ let highScoreDist = 0;
     let bgMusic = null;
     let dashTimeout = null;
     let isHungry = false;
-
     let fishSpawnedCount = 0;
     let nextBigFishAt = 0;
-
     let soapAbsorbing = false;
     let soapAbsorbTimer = 0;
     let soapActive = false;
@@ -392,10 +413,20 @@ let highScoreDist = 0;
     let dolphins = [], dolphinSpawnTimer = 0;
 
     function groundY() { return H * 0.95; }
+    function getFt() { return Math.floor(distance / 10); }
+
+    function nightProgress() {
+      const ft = getFt();
+      if (ft < NIGHT_THRESHOLD) return 0;
+      return Math.min(1, (ft - NIGHT_THRESHOLD) / NIGHT_TRANSITION);
+    }
+
+    function isNight() { return getFt() >= NIGHT_THRESHOLD; }
 
     function rollNextBigFishAt() {
-      nextBigFishAt = fishSpawnedCount + BIG_FISH_MIN_INTERVAL +
-        Math.floor(Math.random() * (BIG_FISH_MAX_INTERVAL - BIG_FISH_MIN_INTERVAL + 1));
+      const minI = isNight() ? NIGHT_BIG_FISH_MIN_INTERVAL : BIG_FISH_MIN_INTERVAL;
+      const maxI = isNight() ? NIGHT_BIG_FISH_MAX_INTERVAL : BIG_FISH_MAX_INTERVAL;
+      nextBigFishAt = fishSpawnedCount + minI + Math.floor(Math.random() * (maxI - minI + 1));
     }
 
     function initRunner() {
@@ -466,10 +497,10 @@ let highScoreDist = 0;
 
     const keys = {};
     document.addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if (e.code === 'Space' || e.code === 'KeyW') { e.preventDefault(); jump(); }
-  if (e.code === 'KeyE') { e.preventDefault(); dash(); }
-  if (e.code === 'KeyQ') { e.preventDefault(); useSoap(); }  
+      keys[e.code] = true;
+      if (e.code === 'Space' || e.code === 'KeyW') { e.preventDefault(); jump(); }
+      if (e.code === 'KeyE') { e.preventDefault(); dash(); }
+      if (e.code === 'KeyQ') { e.preventDefault(); useSoap(); }
     });
     document.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -480,40 +511,45 @@ let highScoreDist = 0;
     }
 
     function useSoap() {
-  if (!gameRunning || isDead || soapAbsorbing || soapActive || !heldSoap) return;
-  heldSoap = false;
-  startSoapAbsorb();
-}
+      if (!gameRunning || isDead || soapAbsorbing || soapActive || !heldSoap) return;
+      heldSoap = false;
+      startSoapAbsorb();
+    }
 
-function spawnDolphin() {
-  const size = H * 0.18 + Math.random() * H * 0.1;
-  const startY = H * 0.05 + Math.random() * (H * 0.6);
-  dolphins.push({
-    x: -size * 2, y: startY, w: size, h: size * 0.6,
-    baseY: startY, speed: 3 + Math.random() * 3,
-    bobOffset: Math.random() * Math.PI * 2,
-    bobSpeed: 0.025 + Math.random() * 0.02,
-    bobAmount: H * 0.06 + Math.random() * H * 0.07,
-    alpha: 0
-  });
-}
+    function spawnDolphin() {
+      const size = H * 0.18 + Math.random() * H * 0.1;
+      const startY = H * 0.05 + Math.random() * (H * 0.6);
+      dolphins.push({
+        x: -size * 2, y: startY, w: size, h: size * 0.6,
+        baseY: startY, speed: 3 + Math.random() * 3,
+        bobOffset: Math.random() * Math.PI * 2,
+        bobSpeed: 0.025 + Math.random() * 0.02,
+        bobAmount: H * 0.06 + Math.random() * H * 0.07,
+        alpha: 0
+      });
+    }
 
     function spawnFish() {
       const tooClose = obstacles.some(o => o.x < W + 300 && o.x > W - 200);
       if (tooClose) return;
-      const size = H * 0.14;
+      const np = nightProgress();
+      const fullyNight = np >= 1;
+      const size = fullyNight ? H * 0.055 : H * 0.14;
+      const night = fullyNight;
       const baseY = groundY() - size - H * 0.05 - Math.random() * H * 0.35;
+      const fishAspect = night && imgs.nightfish.naturalWidth > 0 ? imgs.nightfish.naturalWidth / imgs.nightfish.naturalHeight : 1;
       collectibles.push({
-        x: W + size, y: baseY, w: size, h: size,
-        collected: false,
-        baseY,
+        x: W + size, y: baseY, w: size * fishAspect, h: size,
+        collected: false, baseY,
         bobOffset: Math.random() * Math.PI * 2,
         bobSpeed: 0.04 + Math.random() * 0.03,
-        bobAmount: H * 0.03 + Math.random() * H * 0.02
+        bobAmount: H * 0.03 + Math.random() * H * 0.02,
+        night, glowPhase: 0
       });
       fishSpawnedCount++;
 
-      if (fishSpawnedCount >= nextBigFishAt && bigFish.length === 0) {
+      const bigFishReady = isNight() ? true : getFt() >= BIG_FISH_UNLOCK_DIST;
+      if (bigFishReady && fishSpawnedCount >= nextBigFishAt && bigFish.length === 0) {
         spawnBigFish();
         rollNextBigFishAt();
       }
@@ -524,13 +560,14 @@ function spawnDolphin() {
       if (tooClose) return;
       const size = H * 0.14 * 1.85;
       const baseY = H * 0.05 + Math.random() * (H * 0.45 - size);
+      const bigAspect = imgs.fish2.naturalWidth > 0 ? imgs.fish2.naturalWidth / imgs.fish2.naturalHeight : 1;
       bigFish.push({
-        x: W + size + 180, y: baseY, w: size, h: size,
-        collected: false,
-        baseY,
+        x: W + size + 180, y: baseY, w: size * bigAspect, h: size,
+        collected: false, baseY,
         bobOffset: Math.random() * Math.PI * 2,
         bobSpeed: 0.03 + Math.random() * 0.02,
-        bobAmount: H * 0.025 + Math.random() * H * 0.015
+        bobAmount: H * 0.025 + Math.random() * H * 0.015,
+        night: isNight(), glowPhase: 0
       });
     }
 
@@ -540,12 +577,9 @@ function spawnDolphin() {
       const baseY = groundY() - size - H * 0.15 - Math.random() * H * 0.20;
       soaps.push({
         x: W + size, y: baseY, w: size, h: size,
-        collected: false,
-        baseY,
+        collected: false, baseY,
         bobOffset: Math.random() * Math.PI * 2,
-        bobSpeed: 0.025,
-        bobAmount: H * 0.025,
-        glowPhase: 0
+        bobSpeed: 0.025, bobAmount: H * 0.025, glowPhase: 0
       });
     }
 
@@ -615,7 +649,7 @@ function spawnDolphin() {
       speed = 4 + frameCount * 0.001;
       bgX -= speed * 0.2;
       distance += speed;
-      distCountEl.textContent = Math.floor(distance / 10);
+      distCountEl.textContent = getFt();
 
       if (!soapActive) {
         if (keys['KeyA'] && player.x > W * 0.05) player.x -= 6;
@@ -638,16 +672,13 @@ function spawnDolphin() {
         beatPhase += 1;
         const beatPos = (beatPhase % BEAT_FRAMES) / BEAT_FRAMES;
         if (beatPos < (1 / BEAT_FRAMES)) {
-          beatFlash = 1.0;
-          bgFlash = 1.0;
+          beatFlash = 1.0; bgFlash = 1.0;
           const shakeStrength = 40;
           beatShakeX = (Math.random() - 0.5) * shakeStrength * 2;
           beatShakeY = (Math.random() - 0.5) * shakeStrength * 2;
         } else {
-          beatFlash *= 0.82;
-          bgFlash *= 0.96;
-          beatShakeX *= 0.7;
-          beatShakeY *= 0.7;
+          beatFlash *= 0.82; bgFlash *= 0.96;
+          beatShakeX *= 0.7; beatShakeY *= 0.7;
         }
         bgX -= speed * (SOAP_SPEED_MULT - 1) * 0.2;
         const bubbleFloatY = H * 0.18 + Math.sin(frameCount * 0.035) * H * 0.04;
@@ -662,17 +693,17 @@ function spawnDolphin() {
         obstacles = obstacles.filter(o => o.x + o.w > -10);
 
         dolphinSpawnTimer--;
-if (dolphinSpawnTimer <= 0) {
-  spawnDolphin();
-  dolphinSpawnTimer = 35 + Math.floor(Math.random() * 45);
-}
-for (const d of dolphins) {
-  d.x += d.speed * 1.4;
-  d.y = d.baseY + Math.sin(frameCount * d.bobSpeed + d.bobOffset) * d.bobAmount;
-  if (d.x < W * 0.12) d.alpha = Math.min(1, d.alpha + 0.05);
-  else if (d.x > W * 0.82) d.alpha = Math.max(0, d.alpha - 0.05);
-}
-dolphins = dolphins.filter(d => d.x < W + 300);
+        if (dolphinSpawnTimer <= 0) {
+          spawnDolphin();
+          dolphinSpawnTimer = 35 + Math.floor(Math.random() * 45);
+        }
+        for (const d of dolphins) {
+          d.x += d.speed * 1.4;
+          d.y = d.baseY + Math.sin(frameCount * d.bobSpeed + d.bobOffset) * d.bobAmount;
+          if (d.x < W * 0.12) d.alpha = Math.min(1, d.alpha + 0.05);
+          else if (d.x > W * 0.82) d.alpha = Math.max(0, d.alpha - 0.05);
+        }
+        dolphins = dolphins.filter(d => d.x < W + 300);
         if (soapTimer <= 0) endSoapPowerup();
       } else {
         const wasAirborne = !player.onGround;
@@ -715,15 +746,16 @@ dolphins = dolphins.filter(d => d.x < W + 300);
       }
 
       if (soaps.length === 0 && !soapActive && !soapAbsorbing) {
-  if (Math.random() < 0.0002) spawnSoap();
-}
+        if (Math.random() < 0.0002) spawnSoap();
+      }
 
       for (const f of collectibles) {
         f.x -= speed * 0.7;
         f.y = f.baseY + Math.sin(frameCount * f.bobSpeed + f.bobOffset) * f.bobAmount;
+        f.glowPhase += 0.07;
         if (!f.collected && rectOverlap(player, f, player.w * 0.25)) {
           f.collected = true;
-          fishCount++;
+          fishCount += f.night ? NIGHT_FISH_WORTH : 1;
           fishCountEl.textContent = fishCount;
           playSound('fish.mp3', 0.5);
           isHungry = true;
@@ -736,9 +768,10 @@ dolphins = dolphins.filter(d => d.x < W + 300);
       for (const bf of bigFish) {
         bf.x -= speed * 0.7;
         bf.y = bf.baseY + Math.sin(frameCount * bf.bobSpeed + bf.bobOffset) * bf.bobAmount;
+        bf.glowPhase += 0.05;
         if (!bf.collected && rectOverlap(player, bf, player.w * 0.2)) {
           bf.collected = true;
-          fishCount += BIG_FISH_WORTH;
+          fishCount += bf.night ? NIGHT_BIG_FISH_WORTH : BIG_FISH_WORTH;
           fishCountEl.textContent = fishCount;
           playSound('fish2.mp3', 0.7);
           isHungry = true;
@@ -753,9 +786,9 @@ dolphins = dolphins.filter(d => d.x < W + 300);
         s.y = s.baseY + Math.sin(frameCount * s.bobSpeed + s.bobOffset) * s.bobAmount;
         s.glowPhase += 0.06;
         if (!s.collected && rectOverlap(player, s, player.w * 0.2)) {
-  s.collected = true;
-  heldSoap = true;
-  playSound('fish.mp3', 0.4);
+          s.collected = true;
+          heldSoap = true;
+          playSound('fish.mp3', 0.4);
         }
       }
       soaps = soaps.filter(s => s.x + s.w > -10 && !s.collected);
@@ -775,6 +808,8 @@ dolphins = dolphins.filter(d => d.x < W + 300);
       canvas.style.transform = (soapActive && (Math.abs(beatShakeX) > 0.1 || Math.abs(beatShakeY) > 0.1))
         ? `translate(${beatShakeX}px, ${beatShakeY}px)` : '';
       ctx.clearRect(0, 0, W, H);
+
+      const np = nightProgress();
 
       if (imgs.bg.complete && imgs.bg.naturalWidth > 0 && imgs.bg2.complete && imgs.bg2.naturalWidth > 0) {
         const iw = imgs.bg.naturalWidth, ih = imgs.bg.naturalHeight;
@@ -809,6 +844,40 @@ dolphins = dolphins.filter(d => d.x < W + 300);
         ctx.fillRect(0, 0, W, H);
       }
 
+      if (np > 0) {
+        ctx.save();
+        ctx.globalAlpha = np * 0.75;
+        ctx.fillStyle = '#020a1a';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        ctx.save();
+        for (let i = 0; i < 90; i++) {
+          const sx = (i * 137.508) % W;
+          const sy = (i * 97.31) % (H * 0.55);
+          const sr = 0.5 + (i % 3) * 0.5;
+          const twinkle = 0.4 + Math.sin(frameCount * 0.04 + i * 0.9) * 0.6;
+          ctx.globalAlpha = np * twinkle * 0.85;
+          ctx.fillStyle = i % 5 === 0 ? '#aaddff' : 'white';
+          ctx.beginPath();
+          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        if (np > 0.5) {
+          const shimmerAlpha = (np - 0.5) * 0.18;
+          ctx.save();
+          ctx.globalAlpha = shimmerAlpha;
+          const sg = ctx.createLinearGradient(0, groundY() - H * 0.05, 0, groundY());
+          sg.addColorStop(0, 'rgba(0,180,255,0)');
+          sg.addColorStop(1, 'rgba(0,100,255,0.5)');
+          ctx.fillStyle = sg;
+          ctx.fillRect(0, groundY() - H * 0.05, W, H * 0.05);
+          ctx.restore();
+        }
+      }
+
       if (soapActive) {
         ctx.save();
         ctx.globalAlpha = 0.16;
@@ -825,34 +894,49 @@ dolphins = dolphins.filter(d => d.x < W + 300);
 
       for (const f of collectibles) {
         if (f.collected) continue;
-        if (imgs.fish.complete && imgs.fish.naturalWidth > 0) {
+        const cx = f.x + f.w / 2, cy = f.y + f.h / 2;
+        if (f.night && imgs.nightfish.complete && imgs.nightfish.naturalWidth > 0) {
+          const glowR = f.w * 0.6 + Math.sin(f.glowPhase) * f.w * 0.1;
+          const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+          grd.addColorStop(0, 'rgba(255,105,180,0.55)');
+          grd.addColorStop(1, 'rgba(255,105,180,0)');
+          ctx.shadowColor = 'rgba(255,105,180,0.9)';
           ctx.save();
-          ctx.translate(f.x + f.w / 2, f.y + f.h / 2);
-          ctx.scale(-1, 1);
+          ctx.fillStyle = grd;
+          ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowColor = 'rgba(255,105,180,0.9)';
+          ctx.shadowBlur = 18;
+          ctx.translate(cx, cy); ctx.scale(-1, 1);
+          ctx.drawImage(imgs.nightfish, -f.w / 2, -f.h / 2, f.w, f.h);
+          ctx.restore();
+        } else if (imgs.fish.complete && imgs.fish.naturalWidth > 0) {
+          ctx.save();
+          ctx.translate(cx, cy); ctx.scale(-1, 1);
           ctx.drawImage(imgs.fish, -f.w / 2, -f.h / 2, f.w, f.h);
           ctx.restore();
-        } else {
-          ctx.fillStyle = '#f0c040';
-          ctx.beginPath();
-          ctx.ellipse(f.x + f.w / 2, f.y + f.h / 2, f.w / 2, f.h / 2, 0, 0, Math.PI * 2);
-          ctx.fill();
         }
       }
 
       for (const bf of bigFish) {
         if (bf.collected) continue;
         const cx = bf.x + bf.w / 2, cy = bf.y + bf.h / 2;
-        if (imgs.fish2.complete && imgs.fish2.naturalWidth > 0) {
+        if (bf.night && imgs.nightbigfish.complete && imgs.nightbigfish.naturalWidth > 0) {
+          const glowR = bf.w * 1.0 + Math.sin(bf.glowPhase) * bf.w * 0.18;
+          const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+          grd.addColorStop(0, 'rgba(0,140,255,0.6)');
+          grd.addColorStop(1, 'rgba(0,140,255,0)');
           ctx.save();
-          ctx.translate(cx, cy);
-          ctx.scale(-1, 1);
-          ctx.drawImage(imgs.fish2, -bf.w / 2, -bf.h / 2, bf.w, bf.h);
+          ctx.fillStyle = grd;
+          ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowColor = 'rgba(0,180,255,0.95)';
+          ctx.shadowBlur = 28;
+          ctx.translate(cx, cy); ctx.scale(-1, 1);
+          ctx.drawImage(imgs.nightbigfish, -bf.w / 2, -bf.h / 2, bf.w, bf.h);
           ctx.restore();
-        } else {
+        } else if (imgs.fish2.complete && imgs.fish2.naturalWidth > 0) {
           ctx.save();
-          ctx.translate(cx, cy);
-          ctx.scale(-1, 1);
-          ctx.drawImage(imgs.fish, -bf.w / 2, -bf.h / 2, bf.w, bf.h);
+          ctx.translate(cx, cy); ctx.scale(-1, 1);
+          ctx.drawImage(imgs.fish2, -bf.w / 2, -bf.h / 2, bf.w, bf.h);
           ctx.restore();
         }
       }
@@ -862,76 +946,96 @@ dolphins = dolphins.filter(d => d.x < W + 300);
         const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
         const glowR = s.w * 0.8 + Math.sin(s.glowPhase) * s.w * 0.18;
         const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
-        grd.addColorStop(0, 'rgba(160, 230, 255, 0.6)');
-        grd.addColorStop(1, 'rgba(160, 230, 255, 0)');
+        grd.addColorStop(0, 'rgba(160,230,255,0.6)');
+        grd.addColorStop(1, 'rgba(160,230,255,0)');
         ctx.save();
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         if (imgs.soap.complete && imgs.soap.naturalWidth > 0) {
           ctx.drawImage(imgs.soap, s.x, s.y, s.w, s.h);
-        } else {
-          ctx.fillStyle = '#5bc8f5';
-          ctx.beginPath();
-          ctx.ellipse(cx, cy, s.w / 2, s.h / 2, 0, 0, Math.PI * 2);
-          ctx.fill();
         }
       }
 
       if ((soapActive || soapAbsorbing) && imgs.dolphin && imgs.dolphin.complete && imgs.dolphin.naturalWidth > 0) {
-  for (const d of dolphins) {
-    if (d.alpha <= 0.01) continue;
-    const cx = d.x + d.w / 2, cy = d.y + d.h / 2;
-    const tilt = Math.sin(frameCount * d.bobSpeed + d.bobOffset) * 0.15;
-    ctx.save();
-    ctx.globalAlpha = d.alpha * 0.85;
-    ctx.translate(cx, cy);
-    ctx.rotate(tilt);
-    ctx.scale(-1, 1);
-    ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
-    ctx.restore();
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = d.alpha * 0.55;
-    ctx.translate(cx, cy);
-    ctx.rotate(tilt);
-    ctx.scale(-1, 1);
-    ctx.fillStyle = 'rgba(0, 15, 50, 1)';
-    ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
-    ctx.restore();
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = d.alpha * 0.18;
-    ctx.translate(cx, cy);
-    ctx.rotate(tilt);
-    ctx.scale(-1, 1);
-    ctx.fillStyle = 'rgba(30, 100, 200, 1)';
-    ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
-    ctx.restore();
-  }
-}
+        for (const d of dolphins) {
+          if (d.alpha <= 0.01) continue;
+          const cx = d.x + d.w / 2, cy = d.y + d.h / 2;
+          const tilt = Math.sin(frameCount * d.bobSpeed + d.bobOffset) * 0.15;
+          ctx.save();
+          ctx.globalAlpha = d.alpha * 0.85;
+          ctx.translate(cx, cy); ctx.rotate(tilt); ctx.scale(-1, 1);
+          ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
+          ctx.restore();
+          ctx.save();
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.globalAlpha = d.alpha * 0.55;
+          ctx.translate(cx, cy); ctx.rotate(tilt); ctx.scale(-1, 1);
+          ctx.fillStyle = 'rgba(0,15,50,1)';
+          ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
+          ctx.restore();
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          ctx.globalAlpha = d.alpha * 0.18;
+          ctx.translate(cx, cy); ctx.rotate(tilt); ctx.scale(-1, 1);
+          ctx.fillStyle = 'rgba(30,100,200,1)';
+          ctx.drawImage(imgs.dolphin, -d.w / 2, -d.h / 2, d.w, d.h);
+          ctx.restore();
+        }
+      }
 
       for (const obs of obstacles) {
         if (imgs.obstacle.complete && imgs.obstacle.naturalWidth > 0) {
+          ctx.save();
+          if (np > 0) {
+            ctx.shadowColor = `rgba(255, 105, 180, ${np * 10})`;
+            ctx.shadowBlur = 80 + np * 95;
+          }
           ctx.drawImage(imgs.obstacle, obs.x, obs.y, obs.w, obs.h);
+          ctx.restore();
         } else {
           ctx.fillStyle = '#c0392b';
           ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         }
       }
 
-      if (imgs.sand.complete && imgs.sand.naturalWidth > 0) {
-        const sandH = H * 0.22;
-        const sandY = groundY() - sandH * 0.5;
-        const sandW = imgs.sand.naturalWidth * (sandH / imgs.sand.naturalHeight);
-        const sandOffset = ((bgX / 0.2) % sandW - sandW) % sandW;
-        for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
-          ctx.drawImage(imgs.sand, sandOffset + i * sandW, sandY, sandW, sandH);
-        }
-      }
 
-      if (dashFrames > 0 && !soapActive && !soapAbsorbing &&
-        imgs.player.complete && imgs.player.naturalWidth > 0) {
+      if (imgs.sand.complete && imgs.sand.naturalWidth > 0) {
+  const sandH = H * 0.22;
+  const sandY = groundY() - sandH * 0.5;
+  const sandImg = np > 0 && imgs.nightsand && imgs.nightsand.complete && imgs.nightsand.naturalWidth > 0 ? imgs.nightsand : imgs.sand;
+  const sandW = sandImg.naturalWidth * (sandH / sandImg.naturalHeight);
+  const sandOffset = ((bgX / 0.2) % sandW - sandW) % sandW;
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = W;
+  offscreen.height = H;
+  const offCtx = offscreen.getContext('2d');
+  for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
+    offCtx.drawImage(sandImg, sandOffset + i * sandW, sandY, sandW, sandH);
+  }
+
+  const darkCanvas = document.createElement('canvas');
+  darkCanvas.width = W;
+  darkCanvas.height = H;
+  const darkCtx = darkCanvas.getContext('2d');
+  for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
+    darkCtx.drawImage(sandImg, sandOffset + i * sandW, sandY, sandW, sandH);
+  }
+  darkCtx.globalCompositeOperation = 'source-in';
+  darkCtx.fillStyle = 'rgba(0, 8, 25, 0.5)';
+  darkCtx.fillRect(0, sandY, W, sandH);
+
+  ctx.save();
+  ctx.drawImage(offscreen, 0, 0);
+  if (np > 0) {
+    ctx.globalAlpha = np * 0.45;
+    ctx.drawImage(darkCanvas, 0, 0);
+  }
+  ctx.restore();
+}
+
+      if (dashFrames > 0 && !soapActive && !soapAbsorbing && imgs.player.complete && imgs.player.naturalWidth > 0) {
         const aspect = imgs.player.naturalWidth / imgs.player.naturalHeight;
         const drawW = player.h * aspect;
         ctx.save();
@@ -950,9 +1054,7 @@ dolphins = dolphins.filter(d => d.x < W + 300);
         const drawW = player.h * aspect;
 
         if (soapActive || soapAbsorbing) {
-          const darkAlpha = soapAbsorbing
-            ? 0.72 * (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES)
-            : 0.72;
+          const darkAlpha = soapAbsorbing ? 0.72 * (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES) : 0.72;
           ctx.save();
           ctx.fillStyle = `rgba(0,0,10,${darkAlpha})`;
           ctx.fillRect(0, 0, W, H);
@@ -976,40 +1078,35 @@ dolphins = dolphins.filter(d => d.x < W + 300);
           const pulse = soapActive ? (0.6 + Math.sin(frameCount * 0.08) * 0.4) : absorbProgress;
           const haloR = Math.max(drawW, player.h) * (soapActive ? 1.4 : 0.9);
           const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
-          halo.addColorStop(0, `rgba(180, 240, 255, ${0.55 * pulse})`);
-          halo.addColorStop(0.4, `rgba(120, 200, 255, ${0.3 * pulse})`);
-          halo.addColorStop(1, 'rgba(80, 160, 255, 0)');
+          halo.addColorStop(0, `rgba(180,240,255,${0.55 * pulse})`);
+          halo.addColorStop(0.4, `rgba(120,200,255,${0.3 * pulse})`);
+          halo.addColorStop(1, 'rgba(80,160,255,0)');
           ctx.save();
           ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         }
 
         ctx.save();
-
         if (soapAbsorbing) {
           const absorbProgress = 1 - (soapAbsorbTimer / SOAP_ABSORB_FRAMES);
-          ctx.shadowColor = `rgba(100, 215, 255, ${0.4 + absorbProgress * 0.4})`;
+          ctx.shadowColor = `rgba(100,215,255,${0.4 + absorbProgress * 0.4})`;
           ctx.shadowBlur = 18 + absorbProgress * 35;
         } else if (soapActive) {
           const pulse = 0.7 + Math.sin(frameCount * 0.08) * 0.3;
-          ctx.shadowColor = `rgba(180, 240, 255, ${pulse})`;
+          ctx.shadowColor = `rgba(180,240,255,${pulse})`;
           ctx.shadowBlur = 40 + Math.sin(frameCount * 0.05) * 15;
         }
 
         if (player.flipped && !soapAbsorbing && !soapActive) {
-          ctx.translate(drawX + drawW, drawY);
-          ctx.scale(-1, 1);
+          ctx.translate(drawX + drawW, drawY); ctx.scale(-1, 1);
           ctx.drawImage(imgToDraw, 0, 0, drawW, player.h);
         } else {
           ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
         }
-
         ctx.restore();
-        ctx.save();
 
+        ctx.save();
         if (soapActive && imgs.bubble.complete && imgs.bubble.naturalWidth > 0) {
           const bSize = Math.max(drawW, player.h) * 3.5;
           const bcx = player.x + drawW / 2;
@@ -1018,7 +1115,6 @@ dolphins = dolphins.filter(d => d.x < W + 300);
           ctx.drawImage(imgs.bubble, bcx - bSize / 2, bcy - bSize / 2, bSize, bSize);
           ctx.globalAlpha = 1;
         }
-
         ctx.restore();
       } else {
         ctx.fillStyle = isDead ? '#888' : (soapActive ? '#5bc8f5' : '#9b59b6');
@@ -1031,20 +1127,20 @@ dolphins = dolphins.filter(d => d.x < W + 300);
         const flashAlpha = beatFlash * 0.75;
         const borderW = 18;
         const gtop = ctx.createLinearGradient(0, 0, 0, borderW * 3);
-        gtop.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
-        gtop.addColorStop(1, 'rgba(180, 240, 255, 0)');
+        gtop.addColorStop(0, `rgba(180,240,255,${flashAlpha})`);
+        gtop.addColorStop(1, 'rgba(180,240,255,0)');
         ctx.fillStyle = gtop; ctx.fillRect(0, 0, W, borderW * 3);
         const gbot = ctx.createLinearGradient(0, H, 0, H - borderW * 3);
-        gbot.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
-        gbot.addColorStop(1, 'rgba(180, 240, 255, 0)');
+        gbot.addColorStop(0, `rgba(180,240,255,${flashAlpha})`);
+        gbot.addColorStop(1, 'rgba(180,240,255,0)');
         ctx.fillStyle = gbot; ctx.fillRect(0, H - borderW * 3, W, borderW * 3);
         const gleft = ctx.createLinearGradient(0, 0, borderW * 3, 0);
-        gleft.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
-        gleft.addColorStop(1, 'rgba(180, 240, 255, 0)');
+        gleft.addColorStop(0, `rgba(180,240,255,${flashAlpha})`);
+        gleft.addColorStop(1, 'rgba(180,240,255,0)');
         ctx.fillStyle = gleft; ctx.fillRect(0, 0, borderW * 3, H);
         const gright = ctx.createLinearGradient(W, 0, W - borderW * 3, 0);
-        gright.addColorStop(0, `rgba(180, 240, 255, ${flashAlpha})`);
-        gright.addColorStop(1, 'rgba(180, 240, 255, 0)');
+        gright.addColorStop(0, `rgba(180,240,255,${flashAlpha})`);
+        gright.addColorStop(1, 'rgba(180,240,255,0)');
         ctx.fillStyle = gright; ctx.fillRect(W - borderW * 3, 0, borderW * 3, H);
         ctx.restore();
       }
@@ -1065,25 +1161,25 @@ dolphins = dolphins.filter(d => d.x < W + 300);
 
       dashIndicator.style.opacity = '0';
 
-      const finalDist = Math.floor(distance / 10);
+      const finalDist = getFt();
       const newFishRecord = fishCount > highScoreFish;
       const newDistRecord = finalDist > highScoreDist;
       if (newFishRecord) highScoreFish = fishCount;
       if (newDistRecord) highScoreDist = finalDist;
 
       const recordMsg = (newFishRecord || newDistRecord)
-        ? `<p style="color:rgba(100,220,255,0.95);font-family:'HelveticaNeueBlackExt', sans-serif;font-size:16px;margin:0 0 6px;text-shadow:0 0 12px rgba(100,220,255,0.8);">🏆 New high score!</p>`
-        : `<p style="color:rgba(255,255,255,0.4);font-family:'HelveticaNeueBlackExt', sans-serif;font-size:13px;margin:0 0 6px;">Best: ${highScoreFish} fish &nbsp;|&nbsp; ${highScoreDist} ft</p>`;
+        ? `<p style="color:rgba(100,220,255,0.95);font-family:'HelveticaNeueBlackExt',sans-serif;font-size:16px;margin:0 0 6px;text-shadow:0 0 12px rgba(100,220,255,0.8);">🏆 New high score!</p>`
+        : `<p style="color:rgba(255,255,255,0.4);font-family:'HelveticaNeueBlackExt',sans-serif;font-size:13px;margin:0 0 6px;">Best: ${highScoreFish} fish &nbsp;|&nbsp; ${highScoreDist} ft</p>`;
 
       const runnerStart = document.getElementById('runnerStart');
       runnerStart.style.display = 'flex';
       runnerStart.innerHTML = `
-        <h2 style="color:white;font-family:'HelveticaNeueBlackExt', sans-serif;font-size:48px;font-weight:600;margin:0 0 8px;text-shadow:0 1px 6px rgba(0,0,0,0.7);">Game Over</h2>
-        <p style="color:rgba(255,255,255,0.8);font-family:'HelveticaNeueBlackExt', sans-serif;font-size:15px;margin:0 0 4px;">Fish collected: ${fishCount} &nbsp;|&nbsp; ${finalDist} ft</p>
-        ${recordMsg}
-        <p style="color:rgba(255,255,255,0.6);font-family:'HelveticaNeueBlackExt', sans-serif;font-size:13px;margin:0 0 20px;">The coral got you...</p>
-        <button onclick="startRunner()" style="padding:12px 40px;font-size:16px;border-radius:10px;cursor:pointer;background:rgba(137,86,151,0.5);color:white;border:1px solid rgba(255,255,255,0.4);font-family:'HelveticaNeueBlackExt', sans-serif;font-weight:600;">Play Again</button>
-      `;
+    <h2 style="color:white;font-family:'HelveticaNeueBlackExt',sans-serif;font-size:48px;font-weight:600;margin:0 0 8px;text-shadow:0 1px 6px rgba(0,0,0,0.7);">Game Over</h2>
+    <p style="color:rgba(255,255,255,0.8);font-family:'HelveticaNeueBlackExt',sans-serif;font-size:15px;margin:0 0 4px;">Fish collected: ${fishCount} &nbsp;|&nbsp; ${finalDist} ft</p>
+    ${recordMsg}
+    <p style="color:rgba(255,255,255,0.6);font-family:'HelveticaNeueBlackExt',sans-serif;font-size:13px;margin:0 0 20px;">The coral got you...</p>
+    <button onclick="startRunner()" style="padding:12px 40px;font-size:16px;border-radius:10px;cursor:pointer;background:rgba(137,86,151,0.5);color:white;border:1px solid rgba(255,255,255,0.4);font-family:'HelveticaNeueBlackExt',sans-serif;font-weight:600;">Play Again</button>
+  `;
     }
 
     function loop() {
