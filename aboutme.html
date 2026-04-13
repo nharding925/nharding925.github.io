@@ -337,6 +337,7 @@
       player: loadImg('happykitty.jpeg'),
       dead: loadImg('deadkitty.jpeg'),
       godcat: loadImg('godcat.jpeg'),
+      powerupkitty: loadImg('powerupkitty.jpeg'),
       fish: loadImg('fish.jpeg'),
       fish2: loadImg('fish2.jpeg'),
       nightfish: loadImg('nightfish.jpeg'),
@@ -1037,9 +1038,10 @@
       }
 
       const imgToDraw = isDead ? imgs.dead
-        : (soapActive && imgs.godcat.complete && imgs.godcat.naturalWidth > 0) ? imgs.godcat
-          : (isHungry && imgs.hungry.complete && imgs.hungry.naturalWidth > 0) ? imgs.hungry
-            : imgs.player;
+  : (soapActive && imgs.godcat.complete && imgs.godcat.naturalWidth > 0) ? imgs.godcat
+    : (soapAbsorbing && imgs.powerupkitty.complete && imgs.powerupkitty.naturalWidth > 0) ? imgs.powerupkitty
+      : (isHungry && imgs.hungry.complete && imgs.hungry.naturalWidth > 0) ? imgs.hungry
+        : imgs.player;
 
       if (imgToDraw.complete && imgToDraw.naturalWidth > 0) {
         const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
@@ -1093,8 +1095,18 @@
         if (player.flipped && !soapAbsorbing && !soapActive) {
           ctx.translate(drawX + drawW, drawY); ctx.scale(-1, 1);
           ctx.drawImage(imgToDraw, 0, 0, drawW, player.h);
-        } else {
-          ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
+        } else if (soapActive) {
+  const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
+  const drawWLocal = player.h * aspect;
+  const beatPos = (beatPhase % BEAT_FRAMES) / BEAT_FRAMES;
+  const flippedOnBeat = beatPos < 0.5;
+  ctx.save();
+  ctx.translate(drawX + drawWLocal / 2, drawY + player.h / 2);
+  if (flippedOnBeat) ctx.scale(-1, 1);
+  ctx.drawImage(imgToDraw, -drawWLocal / 2, -player.h / 2, drawWLocal, player.h);
+  ctx.restore();
+} else {
+  ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
         }
         ctx.restore();
 
@@ -1147,7 +1159,7 @@
       document.getElementById('soapUI').style.display = 'none';
       stopMusic();
       bgMusic = new Audio('chihirodeath.mp3');
-      bgMusic.volume = 0.3;
+      bgMusic.volume = 0.7;
       bgMusic.loop = true;
       bgMusic.play().catch(e => console.error('Music error (chihirodeath.mp3):', e));
 
