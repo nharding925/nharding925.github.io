@@ -1003,36 +1003,30 @@ nightsand: loadImg('nightsand.png'),
       if (imgs.sand.complete && imgs.sand.naturalWidth > 0) {
   const sandH = H * 0.22;
   const sandY = groundY() - sandH * 0.5;
-  const sandImg = np > 0 && imgs.nightsand && imgs.nightsand.complete && imgs.nightsand.naturalWidth > 0 ? imgs.nightsand : imgs.sand;
-  const sandW = sandImg.naturalWidth * (sandH / sandImg.naturalHeight);
-  const sandOffset = ((bgX / 0.2) % sandW - sandW) % sandW;
 
-  const offscreen = document.createElement('canvas');
-  offscreen.width = W;
-  offscreen.height = H;
-  const offCtx = offscreen.getContext('2d');
-  for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
-    offCtx.drawImage(sandImg, sandOffset + i * sandW, sandY, sandW, sandH);
-  }
-
-  const darkCanvas = document.createElement('canvas');
-  darkCanvas.width = W;
-  darkCanvas.height = H;
-  const darkCtx = darkCanvas.getContext('2d');
-  for (let i = 0; i < Math.ceil(W / sandW) + 2; i++) {
-    darkCtx.drawImage(sandImg, sandOffset + i * sandW, sandY, sandW, sandH);
-  }
-  darkCtx.globalCompositeOperation = 'source-in';
-  darkCtx.fillStyle = 'rgba(0, 8, 25, 0.5)';
-  darkCtx.fillRect(0, sandY, W, sandH);
+  const sandW_day = imgs.sand.naturalWidth * (sandH / imgs.sand.naturalHeight);
+  const sandOffset = ((bgX / 0.2) % sandW_day - sandW_day) % sandW_day;
 
   ctx.save();
-  ctx.drawImage(offscreen, 0, 0);
-  if (np > 0) {
-    ctx.globalAlpha = np * 0.45;
-    ctx.drawImage(darkCanvas, 0, 0);
+  for (let i = 0; i < Math.ceil(W / sandW_day) + 2; i++) {
+    ctx.drawImage(imgs.sand, sandOffset + i * sandW_day, sandY, sandW_day, sandH);
   }
   ctx.restore();
+
+  if (np > 0 && imgs.nightsand && imgs.nightsand.complete) {
+    const sandW_night = imgs.nightsand.naturalWidth * (sandH / imgs.nightsand.naturalHeight);
+
+    const fade = np * np;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+
+    for (let i = 0; i < Math.ceil(W / sandW_night) + 2; i++) {
+      ctx.drawImage(imgs.nightsand, sandOffset + i * sandW_night, sandY, sandW_night, sandH);
+    }
+
+    ctx.restore();
+  }
 }
 
       if (dashFrames > 0 && !soapActive && !soapAbsorbing && imgs.player.complete && imgs.player.naturalWidth > 0) {
