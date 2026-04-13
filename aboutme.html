@@ -747,6 +747,7 @@
       }
 
       if (soaps.length === 0 && !soapActive && !soapAbsorbing) {
+        //0.0002 og
         if (Math.random() < 0.0002) spawnSoap();
       }
 
@@ -821,25 +822,6 @@
           const useFlipped = Math.floor((-bgX / W) + i) % 2 !== 0;
           ctx.drawImage(useFlipped ? imgs.bg2 : imgs.bg, 0, srcY, iw, srcH, x, 0, W, H);
         }
-        if (soapActive && beatFlash > 0.01 && imgs.bg8.complete && imgs.bg8.naturalWidth > 0) {
-          const iw8 = imgs.bg8.naturalWidth, ih8 = imgs.bg8.naturalHeight;
-          ctx.save();
-          ctx.globalAlpha = bgFlash;
-          for (let i = 0; i < 3; i++) {
-            const x = offset + i * W;
-            const shouldFlip = Math.floor((-bgX / W) + i) % 2 !== 0;
-            if (shouldFlip) {
-              ctx.save();
-              ctx.translate(x + W, 0);
-              ctx.scale(-1, 1);
-              ctx.drawImage(imgs.bg8, 0, ih8 * 0.5, iw8, ih8 * 0.5, 0, 0, W, H);
-              ctx.restore();
-            } else {
-              ctx.drawImage(imgs.bg8, 0, ih8 * 0.5, iw8, ih8 * 0.5, x, 0, W, H);
-            }
-          }
-          ctx.restore();
-        }
       } else {
         ctx.fillStyle = '#0a3d5c';
         ctx.fillRect(0, 0, W, H);
@@ -877,6 +859,29 @@
           ctx.fillRect(0, groundY() - H * 0.05, W, H * 0.05);
           ctx.restore();
         }
+      }
+
+      // bg8 drawn AFTER night overlay so it's unaffected by night darkness
+      if (soapActive && beatFlash > 0.01 && imgs.bg8.complete && imgs.bg8.naturalWidth > 0) {
+        const iw8 = imgs.bg8.naturalWidth, ih8 = imgs.bg8.naturalHeight;
+        const offset = ((bgX % W) - W) % W;
+        ctx.save();
+        ctx.globalAlpha = bgFlash;
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 3; i++) {
+          const x = offset + i * W;
+          const shouldFlip = Math.floor((-bgX / W) + i) % 2 !== 0;
+          if (shouldFlip) {
+            ctx.save();
+            ctx.translate(x + W, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(imgs.bg8, 0, ih8 * 0.5, iw8, ih8 * 0.5, 0, 0, W, H);
+            ctx.restore();
+          } else {
+            ctx.drawImage(imgs.bg8, 0, ih8 * 0.5, iw8, ih8 * 0.5, x, 0, W, H);
+          }
+        }
+        ctx.restore();
       }
 
       if (soapActive) {
@@ -1000,17 +1005,14 @@
         }
       }
 
-
       if (
         imgs.sand.complete && imgs.sand.naturalWidth > 0 &&
         imgs.nightsand && imgs.nightsand.complete && imgs.nightsand.naturalWidth > 0
       ) {
         const sandH = H * 0.22;
         const sandY = groundY() - sandH * 0.5;
-
         const sandW = imgs.sand.naturalWidth * (sandH / imgs.sand.naturalHeight);
         const sandOffset = ((bgX / 0.2) % sandW - sandW) % sandW;
-
 
         ctx.save();
         ctx.globalAlpha = 1 - np;
@@ -1018,7 +1020,6 @@
           ctx.drawImage(imgs.sand, sandOffset + i * sandW, sandY, sandW, sandH);
         }
         ctx.restore();
-
 
         ctx.save();
         ctx.globalAlpha = np;
@@ -1038,10 +1039,10 @@
       }
 
       const imgToDraw = isDead ? imgs.dead
-  : (soapActive && imgs.godcat.complete && imgs.godcat.naturalWidth > 0) ? imgs.godcat
-    : (soapAbsorbing && imgs.powerupkitty.complete && imgs.powerupkitty.naturalWidth > 0) ? imgs.powerupkitty
-      : (isHungry && imgs.hungry.complete && imgs.hungry.naturalWidth > 0) ? imgs.hungry
-        : imgs.player;
+        : (soapActive && imgs.godcat.complete && imgs.godcat.naturalWidth > 0) ? imgs.godcat
+          : (soapAbsorbing && imgs.powerupkitty.complete && imgs.powerupkitty.naturalWidth > 0) ? imgs.powerupkitty
+            : (isHungry && imgs.hungry.complete && imgs.hungry.naturalWidth > 0) ? imgs.hungry
+              : imgs.player;
 
       if (imgToDraw.complete && imgToDraw.naturalWidth > 0) {
         const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
@@ -1049,8 +1050,11 @@
 
         if (soapActive || soapAbsorbing) {
           const darkAlpha = soapAbsorbing ? 0.72 * (1 - soapAbsorbTimer / SOAP_ABSORB_FRAMES) : 0.72;
+          const beatFade = (soapActive && bgFlash > 0.01) ? (1 - bgFlash) : 1;
+          const nightFade = 1 - np;
+          const effectiveDark = darkAlpha * beatFade * nightFade;
           ctx.save();
-          ctx.fillStyle = `rgba(0,0,10,${darkAlpha})`;
+          ctx.fillStyle = `rgba(0,0,10,${effectiveDark})`;
           ctx.fillRect(0, 0, W, H);
           ctx.restore();
         }
@@ -1096,17 +1100,17 @@
           ctx.translate(drawX + drawW, drawY); ctx.scale(-1, 1);
           ctx.drawImage(imgToDraw, 0, 0, drawW, player.h);
         } else if (soapActive) {
-  const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
-  const drawWLocal = player.h * aspect;
-  const beatPos = (beatPhase % BEAT_FRAMES) / BEAT_FRAMES;
-  const flippedOnBeat = beatPos < 0.5;
-  ctx.save();
-  ctx.translate(drawX + drawWLocal / 2, drawY + player.h / 2);
-  if (flippedOnBeat) ctx.scale(-1, 1);
-  ctx.drawImage(imgToDraw, -drawWLocal / 2, -player.h / 2, drawWLocal, player.h);
-  ctx.restore();
-} else {
-  ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
+          const aspect = imgToDraw.naturalWidth / imgToDraw.naturalHeight;
+          const drawWLocal = player.h * aspect;
+          const beatPos = (beatPhase % BEAT_FRAMES) / BEAT_FRAMES;
+          const flippedOnBeat = beatPos < 0.5;
+          ctx.save();
+          ctx.translate(drawX + drawWLocal / 2, drawY + player.h / 2);
+          if (flippedOnBeat) ctx.scale(-1, 1);
+          ctx.drawImage(imgToDraw, -drawWLocal / 2, -player.h / 2, drawWLocal, player.h);
+          ctx.restore();
+        } else {
+          ctx.drawImage(imgToDraw, drawX, drawY, drawW, player.h);
         }
         ctx.restore();
 
