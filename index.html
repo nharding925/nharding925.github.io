@@ -5,6 +5,40 @@
     <title>My Website</title>
     <link rel="stylesheet" href="styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        .project-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px !important;
+        }
+
+        .project-card h3 {
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .card-img-link {
+            width: 100% !important;
+            height: 260px !important;
+            border-radius: 8px;
+            overflow: hidden;
+            display: block;
+            padding: 0 !important;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .card-img-link:hover .card-img {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 
 <body>
@@ -29,23 +63,25 @@
     <!-- Section 2 — background2.jpeg -->
     <section class="section" id="section2" style="background-image: url('background2.jpeg');">
         <div class="section-content">
+            <h2 style="color: white; font-size: 10rem; margin-bottom: 20px; text-align: center;">projects</h2>
             <div class="card-grid">
-                <div class="card">
-                    <h3>Project 1</h3>
-                    <p>bla bla bla.</p>
+
+                <div class="card project-card">
+                    <h3>Fish Tank Simulator</h3>
+                    <a href="https://github.com/nharding925/SER120_Project2/tree/master" target="_blank"
+                        class="card-img-link">
+                        <img src="project1.jpeg" alt="Project 1" class="card-img" />
+                    </a>
                 </div>
-                <div class="card">
-                    <h3>Project 2</h3>
-                    <p>bla bla bla</p>
+
+                <div class="card project-card">
+                    <h3>Bubble Simulator</h3>
+                    <a href="https://github.com/nharding925/SER120_Project4/tree/master" target="_blank"
+                        class="card-img-link">
+                        <img src="project2.jpeg" alt="Project 2" class="card-img" />
+                    </a>
                 </div>
-                <div class="card">
-                    <h3>Project 3</h3>
-                    <p>Sbla bla bla.</p>
-                </div>
-                <div class="card">
-                    <h3>Project 4</h3>
-                    <p>bla bla bla</p>
-                </div>
+
             </div>
         </div>
 
@@ -105,7 +141,7 @@
         });
 
         window.addEventListener('scroll', () => {
-            
+
             // Dog animation
             const rect2 = section2.getBoundingClientRect();
             const section2Height = section2.offsetHeight;
